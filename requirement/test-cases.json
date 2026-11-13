@@ -1,0 +1,370 @@
+{
+  "schemaVersion": 1,
+  "specVersion": 1,
+  "holidayDataVersion": "2026.1",
+  "timezone": "Asia/Shanghai",
+  "threshold": 0.3,
+  "calendar": {
+    "holidays": [
+      { "date": "2026-01-01", "name": "元旦" },
+      { "date": "2026-02-15", "name": "春节" },
+      { "date": "2026-02-16", "name": "春节" },
+      { "date": "2026-02-17", "name": "春节" },
+      { "date": "2026-02-18", "name": "春节" },
+      { "date": "2026-02-19", "name": "春节" },
+      { "date": "2026-02-20", "name": "春节" },
+      { "date": "2026-02-21", "name": "春节" },
+      { "date": "2026-02-22", "name": "春节" },
+      { "date": "2026-02-23", "name": "春节" },
+      { "date": "2026-04-05", "name": "清明节" },
+      { "date": "2026-04-06", "name": "清明节" },
+      { "date": "2026-05-01", "name": "劳动节" },
+      { "date": "2026-05-02", "name": "劳动节" },
+      { "date": "2026-05-03", "name": "劳动节" },
+      { "date": "2026-05-04", "name": "劳动节" },
+      { "date": "2026-06-19", "name": "端午节" },
+      { "date": "2026-09-25", "name": "中秋节" },
+      { "date": "2026-10-01", "name": "国庆节" },
+      { "date": "2026-10-02", "name": "国庆节" },
+      { "date": "2026-10-03", "name": "国庆节" },
+      { "date": "2026-10-04", "name": "国庆节" },
+      { "date": "2026-10-05", "name": "国庆节" }
+    ],
+    "workdayOverrides": [
+      { "date": "2026-02-14", "name": "春节调休" },
+      { "date": "2026-02-28", "name": "春节调休" }
+    ]
+  },
+  "cases": [
+    {
+      "id": "2026-11-empty",
+      "description": "2026-11 月初无记录，S 含今天",
+      "month": "2026-11",
+      "today": "2026-11-16",
+      "records": [],
+      "expected": {
+        "w0": 21,
+        "leave_days": 0,
+        "working_days": 21,
+        "on_site_days": 0,
+        "need": 7,
+        "remain": 7,
+        "rate_percent": 0.0,
+        "remaining_workdays": 11,
+        "feasible": true,
+        "result_status": "needs_days",
+        "invalid_records": []
+      }
+    },
+    {
+      "id": "2026-11-qualified-7",
+      "description": "2026-11 到岗 7 天，刚好达到 30% 以上",
+      "month": "2026-11",
+      "today": "2026-11-16",
+      "records": [
+        { "date": "2026-11-02", "status": "on_site" },
+        { "date": "2026-11-03", "status": "on_site" },
+        { "date": "2026-11-04", "status": "on_site" },
+        { "date": "2026-11-05", "status": "on_site" },
+        { "date": "2026-11-06", "status": "on_site" },
+        { "date": "2026-11-09", "status": "on_site" },
+        { "date": "2026-11-10", "status": "on_site" }
+      ],
+      "expected": {
+        "w0": 21,
+        "leave_days": 0,
+        "working_days": 21,
+        "on_site_days": 7,
+        "need": 7,
+        "remain": 0,
+        "rate_percent": 33.3,
+        "remaining_workdays": 11,
+        "feasible": true,
+        "result_status": "qualified",
+        "invalid_records": []
+      }
+    },
+    {
+      "id": "2026-11-leave-1-a6",
+      "description": "2026-11 请 1 天假、到岗 6 天，分母变为 20，刚好 30%",
+      "month": "2026-11",
+      "today": "2026-11-16",
+      "records": [
+        { "date": "2026-11-02", "status": "on_site" },
+        { "date": "2026-11-03", "status": "on_site" },
+        { "date": "2026-11-04", "status": "on_site" },
+        { "date": "2026-11-05", "status": "on_site" },
+        { "date": "2026-11-06", "status": "on_site" },
+        { "date": "2026-11-09", "status": "on_site" },
+        { "date": "2026-11-10", "status": "leave" }
+      ],
+      "expected": {
+        "w0": 21,
+        "leave_days": 1,
+        "working_days": 20,
+        "on_site_days": 6,
+        "need": 6,
+        "remain": 0,
+        "rate_percent": 30.0,
+        "remaining_workdays": 11,
+        "feasible": true,
+        "result_status": "qualified",
+        "invalid_records": []
+      }
+    },
+    {
+      "id": "2026-11-leave-1-a5",
+      "description": "2026-11 请 1 天假、到岗 5 天，还差 1 天",
+      "month": "2026-11",
+      "today": "2026-11-16",
+      "records": [
+        { "date": "2026-11-02", "status": "on_site" },
+        { "date": "2026-11-03", "status": "on_site" },
+        { "date": "2026-11-04", "status": "on_site" },
+        { "date": "2026-11-05", "status": "on_site" },
+        { "date": "2026-11-06", "status": "on_site" },
+        { "date": "2026-11-09", "status": "leave" }
+      ],
+      "expected": {
+        "w0": 21,
+        "leave_days": 1,
+        "working_days": 20,
+        "on_site_days": 5,
+        "need": 6,
+        "remain": 1,
+        "rate_percent": 25.0,
+        "remaining_workdays": 11,
+        "feasible": true,
+        "result_status": "needs_days",
+        "invalid_records": []
+      }
+    },
+    {
+      "id": "2026-11-leave-3-a6",
+      "description": "2026-11 请 3 天假、到岗 6 天，分母变为 18",
+      "month": "2026-11",
+      "today": "2026-11-16",
+      "records": [
+        { "date": "2026-11-02", "status": "on_site" },
+        { "date": "2026-11-03", "status": "on_site" },
+        { "date": "2026-11-04", "status": "on_site" },
+        { "date": "2026-11-05", "status": "on_site" },
+        { "date": "2026-11-06", "status": "on_site" },
+        { "date": "2026-11-09", "status": "on_site" },
+        { "date": "2026-11-10", "status": "leave" },
+        { "date": "2026-11-11", "status": "leave" },
+        { "date": "2026-11-12", "status": "leave" }
+      ],
+      "expected": {
+        "w0": 21,
+        "leave_days": 3,
+        "working_days": 18,
+        "on_site_days": 6,
+        "need": 6,
+        "remain": 0,
+        "rate_percent": 33.3,
+        "remaining_workdays": 11,
+        "feasible": true,
+        "result_status": "qualified",
+        "invalid_records": []
+      }
+    },
+    {
+      "id": "2026-11-all-leave",
+      "description": "2026-11 整月请假，W=0，不出现除零",
+      "month": "2026-11",
+      "today": "2026-11-30",
+      "records": [
+        { "date": "2026-11-02", "status": "leave" },
+        { "date": "2026-11-03", "status": "leave" },
+        { "date": "2026-11-04", "status": "leave" },
+        { "date": "2026-11-05", "status": "leave" },
+        { "date": "2026-11-06", "status": "leave" },
+        { "date": "2026-11-09", "status": "leave" },
+        { "date": "2026-11-10", "status": "leave" },
+        { "date": "2026-11-11", "status": "leave" },
+        { "date": "2026-11-12", "status": "leave" },
+        { "date": "2026-11-13", "status": "leave" },
+        { "date": "2026-11-16", "status": "leave" },
+        { "date": "2026-11-17", "status": "leave" },
+        { "date": "2026-11-18", "status": "leave" },
+        { "date": "2026-11-19", "status": "leave" },
+        { "date": "2026-11-20", "status": "leave" },
+        { "date": "2026-11-23", "status": "leave" },
+        { "date": "2026-11-24", "status": "leave" },
+        { "date": "2026-11-25", "status": "leave" },
+        { "date": "2026-11-26", "status": "leave" },
+        { "date": "2026-11-27", "status": "leave" },
+        { "date": "2026-11-30", "status": "leave" }
+      ],
+      "expected": {
+        "w0": 21,
+        "leave_days": 21,
+        "working_days": 0,
+        "on_site_days": 0,
+        "need": 0,
+        "remain": 0,
+        "rate_percent": null,
+        "remaining_workdays": null,
+        "feasible": null,
+        "result_status": "no_need",
+        "invalid_records": []
+      }
+    },
+    {
+      "id": "2026-10-historical-below",
+      "description": "2026-10 历史月、到岗 4 天，未达标；不计算 S/feasible",
+      "month": "2026-10",
+      "today": "2026-11-16",
+      "records": [
+        { "date": "2026-10-08", "status": "on_site" },
+        { "date": "2026-10-09", "status": "on_site" },
+        { "date": "2026-10-12", "status": "on_site" },
+        { "date": "2026-10-13", "status": "on_site" }
+      ],
+      "expected": {
+        "w0": 19,
+        "leave_days": 0,
+        "working_days": 19,
+        "on_site_days": 4,
+        "need": 6,
+        "remain": 2,
+        "rate_percent": 21.1,
+        "remaining_workdays": null,
+        "feasible": null,
+        "result_status": "below_target_ended",
+        "invalid_records": []
+      }
+    },
+    {
+      "id": "2026-02-overrides-qualified",
+      "description": "2026-02 含 2 天调休补班，W0=16，到岗 5 天已合格",
+      "month": "2026-02",
+      "today": "2026-02-24",
+      "records": [
+        { "date": "2026-02-02", "status": "on_site" },
+        { "date": "2026-02-03", "status": "on_site" },
+        { "date": "2026-02-04", "status": "on_site" },
+        { "date": "2026-02-05", "status": "on_site" },
+        { "date": "2026-02-06", "status": "on_site" }
+      ],
+      "expected": {
+        "w0": 16,
+        "leave_days": 0,
+        "working_days": 16,
+        "on_site_days": 5,
+        "need": 5,
+        "remain": 0,
+        "rate_percent": 31.3,
+        "remaining_workdays": 5,
+        "feasible": true,
+        "result_status": "qualified",
+        "invalid_records": []
+      }
+    },
+    {
+      "id": "2026-02-leave-on-override",
+      "description": "2026-02 在调休补班日 2/14 请假，W=15，need=5",
+      "month": "2026-02",
+      "today": "2026-02-24",
+      "records": [
+        { "date": "2026-02-02", "status": "on_site" },
+        { "date": "2026-02-03", "status": "on_site" },
+        { "date": "2026-02-04", "status": "on_site" },
+        { "date": "2026-02-05", "status": "on_site" },
+        { "date": "2026-02-06", "status": "on_site" },
+        { "date": "2026-02-14", "status": "leave" }
+      ],
+      "expected": {
+        "w0": 16,
+        "leave_days": 1,
+        "working_days": 15,
+        "on_site_days": 5,
+        "need": 5,
+        "remain": 0,
+        "rate_percent": 33.3,
+        "remaining_workdays": 5,
+        "feasible": true,
+        "result_status": "qualified",
+        "invalid_records": []
+      }
+    },
+    {
+      "id": "2026-11-last-day-feasible",
+      "description": "2026-11 最后一天、到岗 6 天；S 含今天，还来得及",
+      "month": "2026-11",
+      "today": "2026-11-30",
+      "records": [
+        { "date": "2026-11-02", "status": "on_site" },
+        { "date": "2026-11-03", "status": "on_site" },
+        { "date": "2026-11-04", "status": "on_site" },
+        { "date": "2026-11-05", "status": "on_site" },
+        { "date": "2026-11-06", "status": "on_site" },
+        { "date": "2026-11-09", "status": "on_site" }
+      ],
+      "expected": {
+        "w0": 21,
+        "leave_days": 0,
+        "working_days": 21,
+        "on_site_days": 6,
+        "need": 7,
+        "remain": 1,
+        "rate_percent": 28.6,
+        "remaining_workdays": 1,
+        "feasible": true,
+        "result_status": "needs_days",
+        "invalid_records": []
+      }
+    },
+    {
+      "id": "2026-11-last-day-too-late",
+      "description": "2026-11 最后一天、到岗 5 天；S=1，已来不及",
+      "month": "2026-11",
+      "today": "2026-11-30",
+      "records": [
+        { "date": "2026-11-02", "status": "on_site" },
+        { "date": "2026-11-03", "status": "on_site" },
+        { "date": "2026-11-04", "status": "on_site" },
+        { "date": "2026-11-05", "status": "on_site" },
+        { "date": "2026-11-06", "status": "on_site" }
+      ],
+      "expected": {
+        "w0": 21,
+        "leave_days": 0,
+        "working_days": 21,
+        "on_site_days": 5,
+        "need": 7,
+        "remain": 2,
+        "rate_percent": 23.8,
+        "remaining_workdays": 1,
+        "feasible": false,
+        "result_status": "too_late",
+        "invalid_records": []
+      }
+    },
+    {
+      "id": "2026-11-invalid-record",
+      "description": "2026-11 在周六写了一条到岗记录，不计入 A 并列入 invalid_records",
+      "month": "2026-11",
+      "today": "2026-11-16",
+      "records": [
+        { "date": "2026-11-14", "status": "on_site" }
+      ],
+      "expected": {
+        "w0": 21,
+        "leave_days": 0,
+        "working_days": 21,
+        "on_site_days": 0,
+        "need": 7,
+        "remain": 7,
+        "rate_percent": 0.0,
+        "remaining_workdays": 11,
+        "feasible": true,
+        "result_status": "needs_days",
+        "invalid_records": [
+          { "date": "2026-11-14", "status": "on_site" }
+        ]
+      }
+    }
+  ]
+}
