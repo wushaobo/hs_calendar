@@ -10,7 +10,7 @@
 |---|---|
 | 展示名 / 短名 | 到岗会疯 / 到岗 |
 | 技术标识 | `hs_calendar` |
-| specVersion | `1` |
+| specVersion | `2` |
 | holiday dataVersion | `2026.1` |
 | 时区 | `Asia/Shanghai` |
 | 阈值 | 固定 `0.30` |
@@ -35,7 +35,7 @@ pwa/
 ├── public/                       # 可直接拖到 Netlify 的完整静态站点
 └── tools/
     ├── make_icons.py             # 一次性生成图标，不参与运行时
-    └── verify-cases.mjs          # 零依赖验收脚本：跑 test-cases.json 12 条
+    └── verify-cases.mjs          # 零依赖验收脚本：跑 test-cases.json 15 条
 ```
 
 ## 本地预览
@@ -52,7 +52,7 @@ python3 -m http.server 4173 --directory public
 
 ## 测试
 
-### 黄金用例（12 条）
+### 黄金用例（15 条）
 
 ```bash
 cd pwa
@@ -126,14 +126,14 @@ node tools/verify-cases.mjs
   - 状态优先级：`data_error → no_need → qualified → below_target_ended / too_late → needs_days`。
 - 当前月未来工作日允许预排请假；未来请假立即计入 L/W/need，未来到岗/非工作日/未来月记录仍为失效记录；未来月份仍只读。
 - 操作成功后不弹底部 toast；底部 toast 只用于未来/非工作日、保存失败、SW 更新。日历底部预留约 56px，toast 显示在日历下方，不遮挡日期格。
-- 这是 PWA-only 偏离：`requirement/` 写「未来日期不可记录」「未来月份只读」「S=工作日数」；本方案允许当前月未来工作日请假并扣 S，requirement 不改，后续需求 session 可统一。
+- `requirement/` specVersion 2 已纳入：当前月未来工作日只可请假，未来请假计入 L/W/need，S 扣除未来请假，未来月份只读，未来到岗/非工作日记录失效；本 PWA 与之一致。
 - 日期一律以 `YYYY-MM-DD` 存储、`MM/DD` 展示（零填充）；跨年时补年份。所有日期运算集中在 `public/js/dates.js`，固定 `Asia/Shanghai`。
 - 记录字段使用 `updated_at`（ISO-8601 UTC），与 `conventions.md` 对齐；月度统计输出仍只包含契约字段。
 - 首屏不再展示「还需 N 天」；`remain` 仍参与 `needs_days` / `too_late` 判定，第三行展示剩余可用工作日/最终状态。
 - 历史月以月历日期格（勾/假/班）作为日期明细，不额外做文字列表。
 - 未来月不产出统计对象，只显示日历与「未来月份，暂不可记录」。
 - 打开始终当前月，不记忆上次浏览月份。
-- 月历显示以周日为第一列（日、一、二、三、四、五、六）；工作日统计仍按周一至周五；`requirement/` 的「周一为一周第一天」规则待后续需求 session 统一。
+- 月历显示以周日为第一列（日、一、二、三、四、五、六）；`requirement/` specVersion 2 已明确周日开头仅影响日历列顺序，工作日统计仍按周一至周五。
 
 ## 已知限制
 
@@ -147,4 +147,4 @@ node tools/verify-cases.mjs
 
 ## 需求来源
 
-业务规则、字段契约、黄金用例以 `../requirement/` 为准（specVersion `1`）。本目录只读该目录，不修改其中任何文件，也不修改其他方案目录。
+业务规则、字段契约、黄金用例以 `../requirement/` 为准（specVersion `2`）。本目录只读该目录，不修改其中任何文件，也不修改其他方案目录。
