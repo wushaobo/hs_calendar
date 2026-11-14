@@ -1,0 +1,5 @@
+# 只忽略临时/工具产物。
+# public/ 是运行源码和 Netlify 部署产物，必须提交，不能加进这里。
+
+__pycache__/
+.netlify/

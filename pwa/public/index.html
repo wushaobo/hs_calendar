@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>到岗会疯</title>
+  <meta name="description" content="个人到岗率追踪">
+  <meta name="theme-color" content="#2f7d5c">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="到岗">
+  <meta name="format-detection" content="telephone=no">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="32x32" href="./icons/favicon-32.png">
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon-180.png">
+  <link rel="stylesheet" href="./css/app.css">
+</head>
+<body>
+  <div id="app" class="app">
+    <header class="topbar">
+      <button id="prevMonth" class="nav-btn" type="button" aria-label="上个月">‹</button>
+      <div class="month-title-wrap">
+        <h1 id="monthTitle" class="month-title">加载中…</h1>
+        <span id="dataWarning" class="data-warning" hidden>数据待补</span>
+      </div>
+      <button id="nextMonth" class="nav-btn" type="button" aria-label="下个月">›</button>
+    </header>
+
+    <section id="statsCard" class="stats-card" aria-live="polite">
+      <div id="statsLine1" class="stats-line stats-line-1">加载中…</div>
+      <div id="statsLine2" class="stats-line stats-line-2" hidden></div>
+      <div id="statsLine3" class="stats-line stats-line-3" hidden></div>
+      <button id="retryBtn" class="retry-btn" type="button" hidden>重试</button>
+    </section>
+
+    <button id="invalidNotice" class="notice" type="button" hidden></button>
+
+    <div class="weekdays" aria-hidden="true">
+      <span>一</span>
+      <span>二</span>
+      <span>三</span>
+      <span>四</span>
+      <span>五</span>
+      <span>六</span>
+      <span>日</span>
+    </div>
+
+    <div id="calendar" class="calendar" data-rows="6"></div>
+  </div>
+
+  <div id="sheetBackdrop" class="sheet-backdrop" hidden></div>
+
+  <section id="actionSheet" class="sheet action-sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle" hidden>
+    <div class="sheet-grabber" aria-hidden="true"></div>
+    <div class="sheet-head">
+      <h2 id="sheetTitle" class="sheet-title"></h2>
+      <p id="sheetSubtitle" class="sheet-subtitle"></p>
+    </div>
+    <div class="sheet-actions">
+      <button type="button" class="sheet-action action-on-site" data-action="on_site">到岗</button>
+      <button type="button" class="sheet-action action-leave" data-action="leave">请假</button>
+      <button type="button" class="sheet-action action-clear" data-action="clear">清除</button>
+      <button type="button" class="sheet-action action-cancel" data-action="cancel">取消</button>
+    </div>
+  </section>
+
+  <section id="invalidSheet" class="sheet invalid-sheet" role="dialog" aria-modal="true" aria-labelledby="invalidTitle" hidden>
+    <div class="sheet-grabber" aria-hidden="true"></div>
+    <div class="sheet-head">
+      <h2 id="invalidTitle" class="sheet-title">失效记录</h2>
+      <p class="sheet-subtitle">这些记录所在日期不是工作日或不在可记录范围，不计入统计。</p>
+    </div>
+    <ul id="invalidList" class="invalid-list"></ul>
+    <button id="invalidClose" type="button" class="sheet-close">关闭</button>
+  </section>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <script type="module" src="./js/app.js"></script>
+</body>
+</html>
