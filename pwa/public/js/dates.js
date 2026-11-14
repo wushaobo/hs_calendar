@@ -1,5 +1,5 @@
 // 所有日期计算的唯一入口。除本文件外，其他模块不要直接使用 Date / Intl。
-// 日期一律用 YYYY-MM-DD 字符串表示，星期以周一为第一天。
+// 日期一律用 YYYY-MM-DD 字符串表示。weekdayMon0 以周一为 0（统计口径）；月历网格以周日为第一列。
 
 export const TIMEZONE = 'Asia/Shanghai';
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -112,7 +112,8 @@ export function monthKind(monthKey, today) {
 export function monthGrid(monthKey) {
   const bounds = monthBounds(monthKey);
   if (!bounds) return null;
-  const lead = weekdayMon0(bounds.start);
+  // 月历显示以周日为第一列；weekdayMon0 仍是周一=0 的业务口径。
+  const lead = (weekdayMon0(bounds.start) + 1) % 7;
   const cells = [];
   for (let i = 0; i < lead; i += 1) cells.push(null);
   for (let d = 1; d <= bounds.days; d += 1) {

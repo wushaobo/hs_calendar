@@ -584,10 +584,6 @@ function setupEvents() {
       const action = button.dataset.action;
       const date = state.selectedDate;
       if (!date) return;
-      if (action === 'cancel') {
-        closeSheets();
-        return;
-      }
       if (action === 'clear') {
         clearSelected(date);
         return;
@@ -595,10 +591,6 @@ function setupEvents() {
       commitStatus(date, action);
     });
   }
-
-  document.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape') closeSheets();
-  });
 
   setupSwipe();
 }

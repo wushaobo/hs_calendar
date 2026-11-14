@@ -397,13 +397,13 @@ button {
 
 .sheet-actions {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
   margin-top: 14px;
 }
 
 .action-sheet.is-invalid-only .sheet-actions {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 1fr;
 }
 
 .sheet-action {
@@ -426,14 +426,9 @@ button {
   color: var(--orange);
 }
 
-.action-clear,
-.action-cancel {
+.action-clear {
   background: #f0f2ef;
   color: var(--text);
-}
-
-.action-cancel {
-  color: var(--muted);
 }
 
 .sheet-action.is-current {

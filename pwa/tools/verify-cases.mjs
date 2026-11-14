@@ -6,6 +6,7 @@ import {
   addMonths,
   formatMonthTitle,
   monthBounds,
+  monthGrid,
   todayInShanghai,
   weekdayMon0,
 } from '../public/js/dates.js';
@@ -84,6 +85,38 @@ check('calcRatePercent 30 整', calcRatePercent(6, 20) === 30);
 check('formatMonthTitle', formatMonthTitle('2026-11') === '2026 年 11 月');
 check('monthBounds 2026-02', monthBounds('2026-02').days === 28);
 check('weekdayMon0 2026-11-16 是周一', weekdayMon0('2026-11-16') === 0);
+
+const novGrid = monthGrid('2026-11');
+check(
+  'monthGrid 2026-11 周日开头（5 行，1 日在首格）',
+  novGrid.rows === 5 &&
+    novGrid.cells.length === 35 &&
+    novGrid.cells[0] === '2026-11-01' &&
+    novGrid.cells[29] === '2026-11-30' &&
+    novGrid.cells.slice(30).every((cell) => cell === null),
+);
+const junGrid = monthGrid('2026-06');
+check(
+  'monthGrid 2026-06 周一在第二格',
+  junGrid.rows === 5 &&
+    junGrid.cells[0] === null &&
+    junGrid.cells[1] === '2026-06-01' &&
+    junGrid.cells[30] === '2026-06-30',
+);
+const decGrid = monthGrid('2026-12');
+check(
+  'monthGrid 2026-12 前置 2 格',
+  decGrid.cells[0] === null &&
+    decGrid.cells[1] === null &&
+    decGrid.cells[2] === '2026-12-01',
+);
+const augGrid = monthGrid('2026-08');
+check(
+  'monthGrid 2026-08 周六首日前置 6 格',
+  augGrid.rows === 6 &&
+    augGrid.cells[0] === null &&
+    augGrid.cells[6] === '2026-08-01',
+);
 
 const futureStats = computeMonthStats({
   month: '2026-12',
