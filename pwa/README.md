@@ -33,23 +33,6 @@
 ```text
 pwa/
 ├── public/                       # 可直接拖到 Netlify 的完整静态站点
-│   ├── index.html
-│   ├── manifest.webmanifest
-│   ├── sw.js
-│   ├── _headers                  # /sw.js 不缓存，manifest MIME
-│   ├── css/app.css
-│   ├── js/
-│   │   ├── dates.js              # 全部日期工具（唯一日期计算入口）
-│   │   ├── stats.js              # 工作日集合 + 月度统计纯函数
-│   │   ├── db.js                 # IndexedDB 封装 + 节假日播种
-│   │   └── app.js                # 状态、渲染、交互、SW 注册
-│   ├── data/holidays.json        # 从 ../requirement/holidays.json 复制
-│   └── icons/
-│       ├── icon-192.png
-│       ├── icon-512.png
-│       ├── icon-maskable-512.png
-│       ├── apple-touch-icon-180.png
-│       └── favicon-32.png
 └── tools/
     ├── make_icons.py             # 一次性生成图标，不参与运行时
     └── verify-cases.mjs          # 零依赖验收脚本：跑 test-cases.json 12 条
@@ -97,23 +80,26 @@ node tools/verify-cases.mjs
 
 ## 部署到 Netlify（免费子域名）
 
-### 方式 A：拖拽部署（最快）
+### 方式：Netlify CLI
 
-1. 登录 Netlify，打开 <https://app.netlify.com/drop>。
-2. 把 `pwa/public/` **整个目录**拖进去（不是 `pwa/`，也不要只拖 `index.html`）。
-3. 等待部署完成，得到一个 `https://<随机名>.netlify.app` 地址。
-4. 在站点设置里确认可见性为 **Public**（不要开启 Password protection / 密码保护）。
-5. 手机浏览器打开该地址，可「添加到主屏幕」。
+1. 在 `pwa/` 目录执行：
+   ```bash
+   npx --yes netlify-cli@latest login
+   npx --yes netlify-cli@latest sites:list
+   ```
+2. 如果已有 `hs-calendar` 站点，记下它的 Site ID；否则创建：
+   ```bash
+   npx --yes netlify-cli@latest sites:create --name hs-calendar
+   ```
+   `hs-calendar` 被占用时，先和用户确认 fallback 名称，不要静默换名。本项目实际使用 `hs-calendar-339`，以 [DEPLOY.md](DEPLOY.md) 为准。
+3. 用同一个 Site ID 部署：
+   ```bash
+   npx --yes netlify-cli@latest deploy --prod --dir=public --site <SITE_ID>
+   ```
+4. 站点保持 **Public**，不要开启 Password protection。
+5. Site ID、URL 和重新部署命令记录在 [DEPLOY.md](DEPLOY.md)；后续必须用同一个 Site ID，保持同一站点/URL/origin，IndexedDB 记录才能延续。
 
-### 方式 B：连接 Git 仓库
-
-1. Netlify → Add new site → Import an existing project，选择本仓库。
-2. **Base directory** 填 `pwa`（必须；仓库根目录不是站点根目录）。
-3. Build command 留空；Publish directory 为 `public`（`netlify.toml` 已声明）。
-4. 部署后在站点设置中确认可见性为 **Public**，未开启密码保护。
-5. 得到免费 `*.netlify.app` 地址。
-
-`public/_headers` 会为拖拽部署和 Git 部署同时设置：`sw.js` 不缓存、`index.html` 不缓存、manifest MIME、CSP 与基础安全头。
+`public/_headers` 对拖拽和 CLI 部署都生效：`sw.js` 不缓存、`index.html` 不缓存、manifest MIME、CSP 与基础安全头。
 
 ## 数据位置与备份
 
