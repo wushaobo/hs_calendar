@@ -165,24 +165,24 @@ function renderStats() {
     return;
   }
 
-  els.statsLine1.textContent = `已到岗 ${stats.on_site_days} 天 / 工作日 ${stats.working_days} 天`;
-  const rate = stats.rate_percent === null ? '—' : stats.rate_percent.toFixed(1);
-  let line2 = '';
+  const needText = stats.need === null ? '—' : `${stats.need} 天`;
+  els.statsLine1.textContent = `已到岗 ${stats.on_site_days} 天 / 达标需 ${needText}`;
+
+  const rateText =
+    stats.rate_percent === null ? '—' : `${stats.rate_percent.toFixed(1)}%`;
+  const line2 = `工作日共 ${stats.working_days} 天，到岗占比 ${rateText}`;
   let line3 = '';
   let line3Class = '';
 
   switch (stats.result_status) {
     case 'needs_days':
-      line2 = `占比 ${rate}% · 达标需 ${stats.need} 天 · 还需 ${stats.remain} 天`;
       line3 = `剩余 ${stats.remaining_workdays} 个可用工作日，来得及`;
       break;
     case 'too_late':
-      line2 = `占比 ${rate}% · 达标需 ${stats.need} 天 · 还需 ${stats.remain} 天`;
       line3 = `剩余 ${stats.remaining_workdays} 个可用工作日，已来不及`;
       line3Class = 'is-late';
       break;
     case 'qualified':
-      line2 = `占比 ${rate}% · 达标需 ${stats.need} 天`;
       if (monthKind(state.viewMonth, state.today) === 'current') {
         line3 = `已合格 · 剩余 ${stats.remaining_workdays} 个可用工作日`;
         if (stats.on_site_days > stats.need) {
@@ -193,25 +193,23 @@ function renderStats() {
       }
       break;
     case 'below_target_ended':
-      line2 = `占比 ${rate}% · 达标需 ${stats.need} 天 · 还需 ${stats.remain} 天`;
       line3 = '未达标（本月已结束）';
       line3Class = 'is-late';
       break;
     case 'no_need':
-      line2 = '占比 — · 达标需 0 天 · 本月无需到岗';
-      els.statsLine2.classList.add('is-ok');
+      line3 = '本月无需到岗';
       break;
     case 'data_error':
-      line2 = '数据异常，请检查请假记录';
-      els.statsLine2.classList.add('is-bad');
+      line3 = '数据异常，请检查请假记录';
+      line3Class = 'is-late';
       break;
     default:
-      line2 = '暂无数据';
+      line3 = '暂无数据';
       break;
   }
 
   els.statsLine2.textContent = line2;
-  els.statsLine2.hidden = !line2;
+  els.statsLine2.hidden = false;
   els.statsLine3.textContent = line3;
   els.statsLine3.hidden = !line3;
   if (line3Class) els.statsLine3.classList.add(line3Class);
