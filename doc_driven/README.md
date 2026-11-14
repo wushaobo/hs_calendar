@@ -11,10 +11,11 @@ skill 包在云端沙箱中只读；记录保存在 AI app 的资料库，由 sk
 「到岗会疯」是一个单用户的到岗率追踪工具。它不提供独立 App，而是把程序拆成：
 
 - 一个只读的 skill 包（规则、节假日配置、对话流程）；
-- 一份放在 AI app 资料库中的 `records.csv`（唯一记录数据）。
+- 一份放在 AI app 资料库中的 `hs-calendar-records.csv`（唯一记录数据）。
 
-在手机 AI app 里加载 skill 包、把 `records.csv` 放进资料库后，用短指令即可查看
-本月统计、记录到岗/请假、取消记录和查询历史月份。
+在手机 AI app 里加载 skill 包后，用短指令即可查看本月统计、记录到岗/请假、
+取消记录和查询历史月份。skill 首次使用时会自动在资料库创建
+`hs-calendar-records.csv`，不需要手动上传。
 
 ## 2. 当前版本
 
@@ -43,17 +44,16 @@ skill 包在云端沙箱中只读；记录保存在 AI app 的资料库，由 sk
 不要只上传 `SKILL.md`；也不要把 `rules.md`、`holidays.json` 单独上传到资料库。
 skill 包在云端沙箱中只读，skill 不会修改包内文件。
 
-### 3.2 上传到资料库
+### 3.2 资料库中的记录文件
 
-把方案目录根部的 `doc_driven/records.csv` 上传到 AI app 的资料库。它是上传模板，
-首次使用可以只含表头：
+skill 首次使用时会自动在资料库创建 `hs-calendar-records.csv`，内容只有表头：
 
 ```csv
 date,status,updated_at
 ```
 
-上传后，资料库中的这份文件才是运行时数据；仓库里的 `doc_driven/records.csv` 只是
-模板，不是运行数据。资料库中只能有一个 `records.csv`。
+不需要手动上传。仓库里的 `doc_driven/hs-calendar-records.csv` 只是模板；如果自动创建失败，
+可以把它上传到资料库。资料库中只能有一个 `hs-calendar-records.csv`。
 
 记录字段是 `updated_at`；`holidays.json` 里的 `updatedAt` 是配置文件的元数据，
 不是记录字段。
@@ -61,12 +61,12 @@ date,status,updated_at
 ### 3.3 不要上传
 
 - `README.md`、`verification.md`：人类/仓库文件，不上传。
-- `records.csv` 不要放进 skill 包；它必须放在资料库。
+- `hs-calendar-records.csv` 不要放进 skill 包；它在资料库中由 skill 自动创建。
 
 ## 4. 首次加载与确认
 
 1. 按第 3.1 节上传整个 `hs-calendar/` skill 包。
-2. 按第 3.2 节把 `records.csv` 上传到资料库。
+2. 不需要手动上传记录文件；skill 会在资料库自动创建 `hs-calendar-records.csv`。
 3. 发一条「本月」。
 
 应看到类似回复：
@@ -85,9 +85,9 @@ date,status,updated_at
 
 - 回复中的月份和「剩余 S 个工作日」与手机日期相符。例如今天是 2026-11-14，
   剩余工作日应为 11 天；不符时先告诉 skill「今天是 YYYY-MM-DD」。
-- 资料库中只有一个 `records.csv`，且表头为 `date,status,updated_at`。
+- 资料库中已自动创建 `hs-calendar-records.csv`，且表头为 `date,status,updated_at`。
 
-写入不需要你手动保存。skill 会通过 app 的资料库文件工具更新 `records.csv`；
+写入不需要你手动保存。skill 会通过 app 的资料库文件工具更新 `hs-calendar-records.csv`；
 若写入失败，它会回复「写入失败，整批未保存」，不会让你手工复制或替换 CSV。
 
 ## 5. 日常使用
@@ -135,15 +135,15 @@ date,status,updated_at
 
 ## 6. 数据与备份
 
-`records.csv` 是唯一记录来源，位于 AI app 的资料库。
+`hs-calendar-records.csv` 是唯一记录来源，位于 AI app 的资料库。
 
-- **备份**：定期从资料库导出或复制 `records.csv`。备份文件名可以带日期，例如
+- **备份**：定期从资料库导出或复制 `hs-calendar-records.csv`。备份文件名可以带日期，例如
   `records-2026-11-14.csv`，但请放在资料库之外。
-- **恢复**：把备份文件重命名为 `records.csv` 后再上传/替换到资料库，然后发「本月」
-  确认。资料库中只保留一个 `records.csv`。
+- **恢复**：把备份文件重命名为 `hs-calendar-records.csv` 后再上传/替换到资料库，然后发「本月」
+  确认。资料库中只保留一个 `hs-calendar-records.csv`。
 - **不要手工编辑记录内容**：通过对话让 skill 修改；手工编辑容易破坏表头、日期或
   状态格式。
-- 不做云同步；换手机时把 `records.csv` 上传到新设备的资料库即可。
+- 不做云同步；换手机时把 `hs-calendar-records.csv` 上传到新设备的资料库即可。
 
 ## 7. 更新节假日（维护者）
 
@@ -155,17 +155,17 @@ date,status,updated_at
 4. 重新上传整个 `hs-calendar/` skill 包。
 5. 让 skill 重新读取后查一次本月，确认工作日数与预期一致。
 
-资料库中的 `records.csv` 不受影响。若配置变化导致已有记录所在日期不再是工作日，
+资料库中的 `hs-calendar-records.csv` 不受影响。若配置变化导致已有记录所在日期不再是工作日，
 skill 会把它列为「失效记录」，按提示清除或修正；数据不会被自动删除。
 
 ## 8. 故障排查
 
 | 现象 | 处理 |
 |---|---|
-| 提示在资料库中上传 `records.csv` | 把 `records.csv` 上传到资料库；首次可只含表头 |
-| 提示存在多个 `records.csv` | 只保留一个，删除或移走其余同名文件 |
-| 提示 `records.csv` 位于 skill 包内 | 把它移到资料库；skill 不会写包内文件 |
-| 提示写入失败 | 确认资料库中的 `records.csv` 存在且可写；检查 app 是否提供文件写入工具 |
+| 提示无法创建 `hs-calendar-records.csv` | 检查资料库是否可写；或手动上传仓库模板 |
+| 提示存在多个 `hs-calendar-records.csv` | 只保留一个，删除或移走其余同名文件 |
+| 提示 `hs-calendar-records.csv` 位于 skill 包内 | 把它移到资料库；skill 不会写包内文件 |
+| 提示写入失败 | 确认资料库中的 `hs-calendar-records.csv` 存在且可写；检查 app 是否提供文件写入工具 |
 | 提示写入未确认 | 重新发送「本月」核对；必要时重试一次写入 |
 | 提示表头错误 | 第一行改为 `date,status,updated_at` |
 | 提示未来月份只读 | 切换到当前月再记录 |
@@ -173,23 +173,25 @@ skill 会把它列为「失效记录」，按提示清除或修正；数据不�
 | 提示非工作日不可记录 | 选工作日；调休补班日可以记录 |
 | 提示第 N 行格式错误 | 检查该行列数、日期格式、状态拼写 |
 | 提示缺少规则/节假日 | 重新上传完整的 `hs-calendar/` skill 包 |
-| 恢复备份后找不到记录 | 备份文件需重命名为 `records.csv` 再上传 |
+| 恢复备份后找不到记录 | 备份文件需重命名为 `hs-calendar-records.csv` 再上传 |
 | 提示批量段缺少状态/多个状态 | 用逗号/换行把不同状态分开；每段补上状态 |
 | 提示日期范围不支持 | 列出范围内的每一天 |
 | 批量部分未处理 | 按逐项提示修正未处理项，再单独发送 |
-| 提示写入失败/整批未保存 | 检查资料库 `records.csv` 是否存在且可写，重试整批 |
+| 提示写入失败/整批未保存 | 检查资料库 `hs-calendar-records.csv` 是否存在且可写，重试整批 |
 | 统计与预期不符 | 核对 `data/holidays.json` 的 `dataVersion` 和手机当天日期 |
 | 提示节假日数据未配置 | 查询按周末规则计算并提示；写入会被拒绝 |
 
 ## 9. 已知限制
 
-- skill 包在云端沙箱中只读；所有写入只发生在资料库的 `records.csv`。
+- skill 包在云端沙箱中只读；所有写入只发生在资料库的 `hs-calendar-records.csv`。
 - AI app 必须支持资料库文件读写。不支持时只能查询，不能记录；skill 不会退化到
   手工保存 CSV。
-- 资料库中必须只有一个名为 `records.csv` 的文件；多个同名文件时 skill 会停止并
+- 资料库中必须只有一个名为 `hs-calendar-records.csv` 的文件；多个同名文件时 skill 会停止并
   要求清理。
 - 写入失败或回读不一致时，skill 只报告「未保存/未确认」，不出统计。
 - 当前月未来工作日只能请假；未来到岗、未来非工作日请假会被列为失效记录。
+- 资料库缺少 `hs-calendar-records.csv` 时，skill 会自动创建仅含表头的文件；
+  创建失败才需要手动上传模板。
 - 批量操作采用部分执行：无效项不写入，有效项会保存；结果逐条列出。
 - 批量一次最多 50 项；不支持日期范围。
 - 日期解析支持常见写法，但不支持「上周五」「周三」这类相对星期。
@@ -213,3 +215,4 @@ skill 会把它列为「失效记录」，按提示清除或修正；数据不�
 | 2026-11-14 | 1 | 2026.1 | 区分 README 与 AGENTS 职责，精简重复内容 |
 | 2026-11-14 | 2 | 2026.1 | 跟进 specVersion 2：未来请假、S 扣除、`updated_at`、15 条用例 |
 | 2026-11-15 | 2 | 2026.1 | 支持批量增删改：多日期/多状态一次写入，部分执行 |
+| 2026-11-15 | 2 | 2026.1 | 记录文件改名为 `hs-calendar-records.csv`；资料库缺失时 skill 自动创建表头 |

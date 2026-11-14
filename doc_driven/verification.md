@@ -11,7 +11,7 @@
 | 阈值 | `0.30` |
 | 节假日数据 | 23 条公休假 + 2 条调休补班日，两数组无交集 |
 | skill 包布局 | `hs-calendar/{SKILL.md,references/rules.md,data/holidays.json}` |
-| 记录位置 | AI app 资料库中的 `records.csv`（不在 skill 包内） |
+| 记录位置 | AI app 资料库中的 `hs-calendar-records.csv`（不在 skill 包内） |
 | 黄金用例来源 | `../requirement/test-cases.json`（15 条） |
 
 验证方式说明：
@@ -20,7 +20,7 @@
   `hs-calendar/references/rules.md` 的公式重算，并与 `test-cases.json` 的
   `expected` 逐字段比对。该脚本只用于本次验证，不随方案提交。
 - 流程用例用内存资料库模拟 app 的文件工具：
-  `library = { "records.csv": { text, version, writable } }`，
+  `library = { "hs-calendar-records.csv": { text, version, writable } }`，
   文件工具为 `find(name)`、`read(handle)`、`replace(handle, text, version)`；
   handle 不暴露路径。
 - 本次未在真实手机 AI app 中执行。真实 app 是否支持按文件名查找、读取全文、
@@ -107,15 +107,16 @@
 | W7 | today=11/14 时发 `12/01请假` | 首行「未来月份只读」；`replace` 调用次数为 0 | ✅ PASS |
 | W8 | today=11/20 时补记 `11/14到岗` | 首行「非工作日不可记录」（11/14 是周六）；`replace` 调用次数为 0 | ✅ PASS |
 | W9 | today=2028-01-10 时补记 `2027-06-01到岗` | 首行「2027 年节假日数据未配置，暂不可记录」；`replace` 调用次数为 0 | ✅ PASS |
-| W10 | 资料库无 `records.csv`，发 `本月` | 停止；回复「请在资料库中上传 records.csv（首次可只含表头 date,status,updated_at）」；不创建文件 | ✅ PASS |
+| W10 | 资料库无 `hs-calendar-records.csv`，发 `本月` | 自动创建仅含表头 `date,status,updated_at` 的文件；返回 0 记录统计；不提示上传 | ✅ PASS |
+| W10b | 资料库无文件且创建失败/只读 | 停止；回复「无法在资料库创建 hs-calendar-records.csv，请检查资料库是否可写」；不写文件 | ✅ PASS |
 | W11 | 写入工具不可用或资料库只读，发 `11/13请假` | 回复「写入失败，整批未保存」；不出现「已记录」；不输出完整 CSV；文件不变 | ✅ PASS |
-| W12 | 资料库有两个同名 `records.csv` | 停止；回复「资料库中存在多个 records.csv，请只保留一个」；不读取统计、不写入 | ✅ PASS |
-| W13 | `records.csv` 只存在于 skill 包内 | 停止；回复「records.csv 位于 skill 包内，无法写入；请移到资料库」；不写包内文件 | ✅ PASS（人工走查） |
+| W12 | 资料库有两个同名 `hs-calendar-records.csv` | 停止；回复「资料库中存在多个 hs-calendar-records.csv，请只保留一个」；不读取统计、不写入 | ✅ PASS |
+| W13 | `hs-calendar-records.csv` 只存在于 skill 包内 | 停止；回复「hs-calendar-records.csv 位于 skill 包内，无法写入；请移到资料库」；不写包内文件 | ✅ PASS（人工走查） |
 | W14 | `replace` 返回成功但回读内容未变化 | 回复「写入未确认，记录可能未保存」；不出现「已记录」；不出统计 | ✅ PASS |
-| W15 | 读取后、写入前文件版本发生变化 | 重新读取并重算一次；仍变化则回复「records.csv 已被其他会话修改，本次操作未应用」 | ✅ PASS |
+| W15 | 读取后、写入前文件版本发生变化 | 重新读取并重算一次；仍变化则回复「hs-calendar-records.csv 已被其他会话修改，本次操作未应用」 | ✅ PASS |
 | W16 | 文件工具只返回不透明 handle，不返回路径 | 全流程正常；没有构造、拼接或猜测任何路径 | ✅ PASS（人工走查） |
 | W17 | 发 `取消11/13` 但目标日期不存在 | 回复「11/13 没有记录，未做修改」；`replace` 调用次数为 0 | ✅ PASS |
-| W18 | `records.csv` 表头错误 | 停止写入；首行「records.csv 表头错误：应为 date,status,updated_at」 | ✅ PASS |
+| W18 | `hs-calendar-records.csv` 表头错误 | 停止写入；首行「hs-calendar-records.csv 表头错误：应为 date,status,updated_at」 | ✅ PASS |
 | W19 | 同日期重复行 | 读取时取 `updated_at` 最新一条并提示；写入时全量去重 | ✅ PASS |
 
 补充核对：
@@ -123,7 +124,7 @@
 - 写入成功后统计必须来自回读后的文件，不是写入前的内存结果。
 - 写入失败后不得出现统计块；若用户随后发「本月」，按实际文件计算。
 - 多个同名文件时一律停止，不静默选择。
-- 文件名精确匹配 `records.csv`；大小写变体按缺失处理。
+- 文件名精确匹配 `hs-calendar-records.csv`；大小写变体按缺失处理。
 - 未来请假写入后立即计入 `L`，并从 `S` 中扣除；未来到岗不写入。
 
 ### 4.2 批量流程用例
@@ -165,18 +166,19 @@
 |---|---|
 | 文件树符合 `hs-calendar/` 包布局 | ✅ |
 | `SKILL.md` 有 YAML frontmatter，name/description 完整 | ✅ |
-| skill 包内不存在 `records.csv` | ✅ |
+| skill 包内不存在 `hs-calendar-records.csv` | ✅ |
 | `SKILL.md` 不含 `README.md`；`./`、`../`、绝对路径、`同目录` 只出现在禁止语境 | ✅ |
-| `rules.md` 不再出现“同目录下的 records.csv 与 holidays.json” | ✅ |
+| `rules.md` 不再出现“同目录下的 hs-calendar-records.csv 与 holidays.json” | ✅ |
 | `SKILL.md` / `rules.md` 不再出现旧文件名 `skill.md` | ✅ |
-| 所有文档不再把 `records.csv` 描述为 skill 包内文件 | ✅ |
+| 所有文档不再把 `hs-calendar-records.csv` 描述为 skill 包内文件 | ✅ |
 | 记录字段统一为 `updated_at`；`holidays.json` 元数据仍为 `updatedAt` | ✅ |
 | 已采用 specVersion 2 的未来请假口径：未来请假有效、未来到岗无效、未来非工作日请假无效 | ✅ |
 | `S` 扣除未来请假日 | ✅ |
 | 不再存在“输出完整 CSV 让用户替换”的降级路径 | ✅ |
 | 写入失败文案不包含“复制/粘贴/手工保存/替换文件”指令 | ✅ |
 | 写入流程包含写前版本检查和写后回读 | ✅ |
-| 缺 `records.csv`、多个同名文件、只读资料库、工具不可用都有固定文案 | ✅ |
+| 缺失 `hs-calendar-records.csv` 时自动创建表头；创建失败有固定文案 | ✅ |
+| 多个同名文件、只读资料库、工具不可用都有固定文案 | ✅ |
 | 包内 `rules.md`/`holidays.json` 是唯一权威，资料库同名文件不参与 | ✅ |
 | 15 条黄金用例全部通过 | ✅ |
 | 批量语法：段分隔符、`、` 作为日期分隔、每段一个状态 | ✅ |
@@ -190,7 +192,7 @@
 ## 6. 结论与遗留风险
 
 - 15 条黄金用例全部通过，specVersion 2 口径已落地；8 个算例逐字一致。
-- 17 条单条流程用例通过内存资料库模拟，W13/W16 为人工走查。
+- 18 条单条流程用例通过内存资料库模拟，W13/W16 为人工走查。
 - 15 条批量流程用例（B1–B14，含 B2b）通过；其中 B14 为规则检查，其余为内存
   资料库模拟。批量只写一次、部分执行、删除无记录计为无变化、统计只展示当前月。
 - 真实 app 的文件工具能力仍需实测。

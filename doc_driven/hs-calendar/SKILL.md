@@ -6,7 +6,7 @@ description: 到岗会疯 — 记录到岗/请假，计算本月到岗率、还�
 # 到岗会疯 · skill
 
 > 本 skill 运行在只读沙箱中。skill 包内只有 `references/rules.md` 与
-> `data/holidays.json`，均只读；`records.csv` 位于 AI app 的资料库，可读写。
+> `data/holidays.json`，均只读；`hs-calendar-records.csv` 位于 AI app 的资料库，可读写。
 > 本文件只负责流程与文案渲染；业务公式、状态码、文案的最终依据是
 > `references/rules.md`。
 
@@ -22,7 +22,7 @@ description: 到岗会疯 — 记录到岗/请假，计算本月到岗率、还�
 硬性边界：
 
 - 计算必须逐字按 `references/rules.md`，不得自创公式、状态码或文案。
-- `records.csv` 是唯一记录来源；聊天内容、上一次回答、记忆都不是数据源。
+- `hs-calendar-records.csv` 是唯一记录来源；聊天内容、上一次回答、记忆都不是数据源。
 - `data/holidays.json` 只读，绝不修改。
 - 不新建第二个数据文件，不把记录写到别处。
 - 不把数据发送到本会话之外的第三方服务，不做云同步。
@@ -44,13 +44,13 @@ description: 到岗会疯 — 记录到岗/请假，计算本月到岗率、还�
 
 | 文件 | 作用 |
 |---|---|
-| `records.csv` | 到岗/请假记录，唯一数据源 |
+| `hs-calendar-records.csv` | 到岗/请假记录，唯一数据源 |
 
-`records.csv` 不在 skill 包内，位于 AI app 的资料库。指挥 AI agent 使用 app
+`hs-calendar-records.csv` 不在 skill 包内，位于 AI app 的资料库。指挥 AI agent 使用 app
 提供的资料库文件工具：
 
 ```text
-find(name)                      # 按文件名 records.csv 查找
+find(name)                      # 按文件名 hs-calendar-records.csv 查找
 read(handle)                    # 读取内容
 replace(handle, text, version)  # 整文件替换
 read(handle)                    # 回读确认
@@ -63,9 +63,9 @@ read(handle)                    # 回读确认
 - 不使用 `./`、`../`、绝对路径或“同目录”定位文件。
 - 不修改 skill 包内任何文件。
 - 不要求用户手动复制、保存、替换 CSV；写入由 AI agent 通过 app 文件工具完成。
-- 找不到 `records.csv`：停止，要求用户上传到资料库。
-- 多个同名 `records.csv`：停止，要求只保留一个。
-- `records.csv` 出现在 skill 包内：停止，要求移到资料库，不写包内文件。
+- 资料库中找不到 `hs-calendar-records.csv`：先创建仅含表头的文件；创建失败才停止。
+- 多个同名 `hs-calendar-records.csv`：停止，要求只保留一个。
+- `hs-calendar-records.csv` 出现在 skill 包内：停止，要求移到资料库，不写包内文件。
 
 ## 3. 每次回答前的读取与校验
 
@@ -80,10 +80,11 @@ read(handle)                    # 回读确认
      `YYYY-MM-DD`；
    - 各自数组内日期不重复，两数组日期无交集；
    - `dataVersion` 与 `rules.md` 第 1 节记录不一致时提示，但不停止。
-3. 指挥 AI agent 用 app 的资料库文件工具定位 `records.csv`：
-   - 0 个 → 回复 `请在资料库中上传 records.csv（首次可只含表头 date,status,updated_at）`，
-     停止；
-   - 多于 1 个 → 回复 `资料库中存在多个 records.csv，请只保留一个`，停止；
+3. 指挥 AI agent 用 app 的资料库文件工具定位 `hs-calendar-records.csv`：
+   - 0 个 → 用 app 文件工具在资料库创建 `hs-calendar-records.csv`，内容为表头
+     `date,status,updated_at`；创建后重新读取。创建失败 → 回复
+     `无法在资料库创建 hs-calendar-records.csv，请检查资料库是否可写`，停止；
+   - 多于 1 个 → 回复 `资料库中存在多个 hs-calendar-records.csv，请只保留一个`，停止；
    - 1 个 → 读取并校验：
      - 第一行严格为 `date,status,updated_at`；
      - 每行 3 列（允许行尾空格）；
@@ -93,7 +94,7 @@ read(handle)                    # 回读确认
 4. 确定「今天」：按 `Asia/Shanghai` 取当前日期。若环境无法提供可靠日期，
    先问用户：`今天是哪一天？（YYYY-MM-DD）`，不要猜。
 5. 解析意图与日期，执行只读查询或写入流程。
-6. 写入后重新读取资料库中的 `records.csv`，再按 `rules.md` 第 5、6 节重算。
+6. 写入后重新读取资料库中的 `hs-calendar-records.csv`，再按 `rules.md` 第 5、6 节重算。
 7. 按第 11 节模板回复，并做第 13 节自检。
 
 校验失败时的处理见第 12 节错误表。任何文件缺失或格式错误都不得猜测补全。
@@ -226,7 +227,7 @@ read(handle)                    # 回读确认
 单条写入是批量的特例（items 长度为 1）。先解析，再逐项校验；部分执行。
 
 1. 按第 6.4 节把消息解析为有序 items `{date, op}`；无法解析的段进入 `unprocessed`。
-2. 读取并校验 `records.csv`（第 3 节）。
+2. 读取并校验 `hs-calendar-records.csv`（第 3 节）。
 3. 按顺序处理每个 item：
    - **删除**：记录存在则删除并记「已取消 …（原为 …）」；不存在则记
      「… 没有记录，未做修改」。删除不要求工作日或未来日期，允许清理未来无效记录。
@@ -243,12 +244,12 @@ read(handle)                    # 回读确认
 
 删除无记录不算失败，计为“无变化”；未处理项和未确认项必须逐条列出，不得静默丢弃。
 
-## 9. 通过资料库文件工具写入 records.csv
+## 9. 通过资料库文件工具写入 hs-calendar-records.csv
 
 ```text
 locate_and_read:
-  指挥 AI agent 用 app 的资料库文件工具按文件名 records.csv 查找
-  0 个 → 停止，提示上传
+  指挥 AI agent 用 app 的资料库文件工具按文件名 hs-calendar-records.csv 查找
+  0 个 → 创建表头为 date,status,updated_at 的 hs-calendar-records.csv；创建失败 → 停止
   多于 1 个 → 停止，要求只保留一个
   read(handle) → 校验表头、列数、日期、状态
   按 date 去重，保留 updated_at 最新的一行
@@ -269,7 +270,7 @@ apply_batch(items):
   rows = 按 date 去重、升序排序
   text = "date,status,updated_at\n" + 全量行
   写前重新读取并比对版本/内容；若已变化，基于最新内容重算整批一次
-  指挥 AI agent 用 app 的资料库文件工具整文件替换 records.csv
+  指挥 AI agent 用 app 的资料库文件工具整文件替换 hs-calendar-records.csv
   再 read(handle) 回读，逐项确认成功项、行数、排序
   成功 → 第 11 节 / rules.md 9.6 逐项确认 + 当前月统计
   失败 → 第 10 节「写入失败，整批未保存」
@@ -290,18 +291,18 @@ apply_batch(items):
 ## 10. 写入失败与歧义处理
 
 - 写入工具不可用、资料库只读或替换报错：回复 `写入失败，整批未保存`，可补充
-  `请确认资料库中的 records.csv 存在且可写`。不输出完整 CSV，不要求用户手动保存，
+  `请确认资料库中的 hs-calendar-records.csv 存在且可写`。不输出完整 CSV，不要求用户手动保存，
   不说已记录，不基于假设写入的结果出统计。
 - 批量所有项都未处理或都无变化：不写文件，回复 `没有可执行的变更`，可附当前月实际统计。
 - 写后回读内容未变化或只匹配部分目标行：回复 `写入未确认，记录可能未保存`，
   并列出未确认项；不出统计。
 - 读后写前版本变化：重新读取并基于最新内容重算整批一次；仍变化则回复
-  `records.csv 已被其他会话修改，本次操作未应用`，不覆盖。
-- 找不到 `records.csv`：
-  `请在资料库中上传 records.csv（首次可只含表头 date,status,updated_at）`
-- 多个 `records.csv`：`资料库中存在多个 records.csv，请只保留一个`
-- `records.csv` 在 skill 包内：
-  `records.csv 位于 skill 包内，无法写入；请移到资料库`
+  `hs-calendar-records.csv 已被其他会话修改，本次操作未应用`，不覆盖。
+- 无法创建 `hs-calendar-records.csv`：
+  `无法在资料库创建 hs-calendar-records.csv，请检查资料库是否可写`
+- 多个 `hs-calendar-records.csv`：`资料库中存在多个 hs-calendar-records.csv，请只保留一个`
+- `hs-calendar-records.csv` 在 skill 包内：
+  `hs-calendar-records.csv 位于 skill 包内，无法写入；请移到资料库`
 - 包内缺规则或节假日：
   `缺少 skill 包内的规则或节假日文件，请重新上传完整 skill 包`
 
@@ -373,7 +374,7 @@ apply_batch(items):
 本月 / 到岗 / 请假 / 取消 / 10月 / 帮助
 也可直接说：今天到岗、11月12日请假、取消11月10日、看下10月
 批量：11/11 11/13 到岗、11/12未到岗，11/27请假
-规则见 skill 包内 rules.md，数据在资料库 records.csv。
+规则见 skill 包内 rules.md，数据在资料库 hs-calendar-records.csv。
 ```
 
 ### 11.7 批量操作
@@ -402,12 +403,12 @@ apply_batch(items):
 | 缺 skill 包规则/节假日 | `缺少 skill 包内的规则或节假日文件，请重新上传完整 skill 包` | 停止 |
 | `holidays.json` 非法 | `holidays.json 格式错误` | 停止 |
 | 节假日配置冲突 | `节假日配置错误：{date} 同时出现在 holidays 与 workdayOverrides` | 停止 |
-| 缺 `records.csv` | `请在资料库中上传 records.csv（首次可只含表头 date,status,updated_at）` | 停止，不按空表继续 |
-| 多个 `records.csv` | `资料库中存在多个 records.csv，请只保留一个` | 停止 |
-| `records.csv` 在 skill 包内 | `records.csv 位于 skill 包内，无法写入；请移到资料库` | 停止 |
-| 表头错误 | `records.csv 表头错误：应为 date,status,updated_at` | 停止 |
-| 行格式错误 | `records.csv 第 N 行格式错误（{原因}），请修正后重试` | 查询时跳过该行并报告；写入时整体拒绝 |
-| 同日重复行 | `records.csv 存在重复日期 {date}，已按最新一条计算` | 取 `updated_at` 最新一行；写入时自动去重 |
+| 无法创建 `hs-calendar-records.csv` | `无法在资料库创建 hs-calendar-records.csv，请检查资料库是否可写` | 停止；可手动上传模板 |
+| 多个 `hs-calendar-records.csv` | `资料库中存在多个 hs-calendar-records.csv，请只保留一个` | 停止 |
+| `hs-calendar-records.csv` 在 skill 包内 | `hs-calendar-records.csv 位于 skill 包内，无法写入；请移到资料库` | 停止 |
+| 表头错误 | `hs-calendar-records.csv 表头错误：应为 date,status,updated_at` | 停止 |
+| 行格式错误 | `hs-calendar-records.csv 第 N 行格式错误（{原因}），请修正后重试` | 查询时跳过该行并报告；写入时整体拒绝 |
+| 同日重复行 | `hs-calendar-records.csv 存在重复日期 {date}，已按最新一条计算` | 取 `updated_at` 最新一行；写入时自动去重 |
 | 2027 或未覆盖年份写入 | `{year} 年节假日数据未配置，暂不可记录` | 不改数据 |
 | 2027 或未覆盖年份查询 | 正常统计，末尾加 `{year} 年节假日数据未配置，仅按周末规则计算` | 继续 |
 | 写入失败 | `写入失败，整批未保存` | 不出统计，不要求用户手工保存 |
@@ -417,7 +418,7 @@ apply_batch(items):
 | 日期范围 | `不支持日期范围，请列出每一天` | 该段不处理 |
 | 批量无有效项 | `没有可执行的变更` | 不写文件；可出当前月统计 |
 | 批量超过上限 | `一次最多处理 50 项，请拆分发送` | 不写文件 |
-| 并发修改 | `records.csv 已被其他会话修改，本次操作未应用` | 不覆盖 |
+| 并发修改 | `hs-calendar-records.csv 已被其他会话修改，本次操作未应用` | 不覆盖 |
 | 无权限 | `未授权` | 停止 |
 
 CSV 行格式错误的原因要具体，例如：`列数不是 3`、`日期不是 YYYY-MM-DD`、
@@ -436,7 +437,7 @@ CSV 行格式错误的原因要具体，例如：`列数不是 3`、`日期不�
 6. 批内同一日期是否后写覆盖，最终只保留一行；是否只调用一次 `replace`。
 7. 写操作是否通过 app 资料库文件工具完成；写前是否检查版本/内容变化；
    写后是否逐项回读确认。
-8. 是否只修改了资料库 `records.csv`，没有修改 skill 包文件。
+8. 是否只修改了资料库 `hs-calendar-records.csv`，没有修改 skill 包文件。
 9. 写失败是否明确说「整批未保存/未确认」，且没有要求用户手动保存 CSV。
 10. 统计是否只展示当前月；跨月项是否逐项确认并提示单独查询。
 11. 当前月、历史月、未来月的输出是否符合第 11 节与 `rules.md` 第 9 节。
@@ -444,12 +445,13 @@ CSV 行格式错误的原因要具体，例如：`列数不是 3`、`日期不�
 13. 失效记录是否单独提示。
 14. 是否使用了 `rules.md` 的原文文案，没有自创状态或说法。
 15. 是否没有使用相对路径、绝对路径或“同目录”定位文件。
+16. 资料库缺少 `hs-calendar-records.csv` 时，是否先创建仅含表头的文件；创建失败才停止。
 
 ## 14. 禁止事项
 
 - 不重新定义公式、状态码、字段名或文案。
 - 不根据聊天记忆补全记录，不假设文件内容。
-- 不猜测缺失文件或损坏行，不自动创建规则以外的文件。
+- 不猜测损坏行，不自动创建 `hs-calendar-records.csv` 以外的文件。
 - 不假装写入成功。
 - 不修改 skill 包内任何文件（`references/rules.md`、`data/holidays.json`）。
 - 不使用相对路径、绝对路径或“同目录”查找文件。
@@ -458,4 +460,5 @@ CSV 行格式错误的原因要具体，例如：`列数不是 3`、`日期不�
 - 无法分组时不猜测，不静默丢弃任何一段。
 - 不逐项 replace 批量操作；整批只写一次。
 - 不把未处理项说成已记录。
+- 不把缺失文件当成不可恢复；先尝试创建表头文件，创建失败才停止。
 - 不绑定任何具体 AI app 的工具名、卡片格式或记忆机制。

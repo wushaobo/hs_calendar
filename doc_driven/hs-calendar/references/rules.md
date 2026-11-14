@@ -3,14 +3,14 @@
 > 本文件是 doc_driven 方案唯一的业务口径来源。`SKILL.md` 只负责流程与文案渲染，
 > 不得自行改写这里的公式、状态码或文案。
 > 本文件不依赖任何仓库路径；全部数据来源是 skill 包内的 `holidays.json` 与
-> 资料库中的 `records.csv`。
+> 资料库中的 `hs-calendar-records.csv`。
 
 ## 1. 定位与版本
 
 - 用途：单用户按自然月追踪个人到岗率，判定条件为
   `当月到岗天数 ÷ 当月工作日天数 ≥ 30%`。
 - 运行环境：手机 AI app 的 skill 包 + 资料库；读取 skill 包内的 `rules.md`、
-  `SKILL.md`、`holidays.json` 与资料库中的 `records.csv` 后工作；不使用本项目
+  `SKILL.md`、`holidays.json` 与资料库中的 `hs-calendar-records.csv` 后工作；不使用本项目
   自建的服务端，数据不做跨设备同步。
 - 版本常量：
 
@@ -138,7 +138,7 @@ W0 = |workdaySet(month)|
 
 ### 4.3 写入拒绝与读取标记的区别
 
-- 用户新写入时：不满足条件的日期直接拒绝，不进入 `records.csv`。
+- 用户新写入时：不满足条件的日期直接拒绝，不进入 `hs-calendar-records.csv`。
   - 当前月未来工作日只能写 `leave`，不能写 `on_site`；未来月份只读。
   - 未来工作日写 `on_site` 用「未来工作日只能标记请假，不能标记到岗」；
     未来月份用「未来月份只读」；周末/公休假用「非工作日不可记录」。
@@ -240,9 +240,13 @@ feasible = (S ≥ remain)
 
 ## 8. 数据文件契约
 
-### 8.1 records.csv
+### 8.1 hs-calendar-records.csv
 
 唯一记录来源，位于 AI app 的资料库，不在 skill 包内。聊天内容不是数据源。
+
+若资料库中不存在 `hs-calendar-records.csv`，skill 先创建仅含表头
+`date,status,updated_at` 的文件，再继续读取/写入；创建失败时停止，并提示检查
+资料库是否可写。
 
 ```csv
 date,status,updated_at
@@ -262,7 +266,7 @@ date,status,updated_at
 | 读取容错 | 允许行尾空格；缺列、非法日期、非法状态的行按格式错误报告 |
 
 写入必须通过 app 的资料库文件工具全量重写：保留表头，删除同一日期的旧行，
-加入新行，按日期排序，再整文件替换资料库中的 `records.csv`。写入后必须回读，
+加入新行，按日期排序，再整文件替换资料库中的 `hs-calendar-records.csv`。写入后必须回读，
 确认目标行存在且状态正确。
 
 批量写入时：
@@ -289,7 +293,7 @@ date,status,updated_at
 - 未知字段忽略，保证向前兼容。
 - 两个数组的日期不得重复。
 - 文件缺失、JSON 非法或配置冲突时停止计算，并按 `SKILL.md` 的错误表回复。
-- `updatedAt` 是 `holidays.json` 自身的元数据字段，与 `records.csv` 的
+- `updatedAt` 是 `holidays.json` 自身的元数据字段，与 `hs-calendar-records.csv` 的
   `updated_at` 不是同一个字段。
 
 ## 9. 回复结构
