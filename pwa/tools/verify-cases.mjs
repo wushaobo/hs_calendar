@@ -146,6 +146,67 @@ check(
     deepEqual(futureRecord.invalid_records, [{ date: '2026-11-20', status: 'on_site' }]),
 );
 
+const futureLeaveStats = computeMonthStats({
+  month: '2026-11',
+  today: '2026-11-16',
+  records: [{ date: '2026-11-20', status: 'leave' }],
+  cal,
+});
+check(
+  '未来请假计入统计且从 S 扣除',
+  futureLeaveStats.leave_days === 1 &&
+    futureLeaveStats.working_days === 20 &&
+    futureLeaveStats.on_site_days === 0 &&
+    futureLeaveStats.need === 6 &&
+    futureLeaveStats.remain === 6 &&
+    futureLeaveStats.rate_percent === 0 &&
+    futureLeaveStats.remaining_workdays === 10 &&
+    futureLeaveStats.feasible === true &&
+    futureLeaveStats.result_status === 'needs_days' &&
+    futureLeaveStats.invalid_records.length === 0,
+);
+
+const futureLeaveInput = validateMarkInput({
+  date: '2026-11-20',
+  status: 'leave',
+  today: '2026-11-16',
+  cal,
+});
+check('未来工作日允许请假', futureLeaveInput.ok === true);
+
+const futureOnSiteInput = validateMarkInput({
+  date: '2026-11-20',
+  status: 'on_site',
+  today: '2026-11-16',
+  cal,
+});
+check(
+  '未来工作日仍拒绝到岗',
+  futureOnSiteInput.ok === false && futureOnSiteInput.code === 'future',
+);
+
+const futureWeekendLeave = validateMarkInput({
+  date: '2026-11-21',
+  status: 'leave',
+  today: '2026-11-16',
+  cal,
+});
+check(
+  '未来非工作日拒绝请假',
+  futureWeekendLeave.ok === false && futureWeekendLeave.code === 'non_workday',
+);
+
+const futureMonthLeave = validateMarkInput({
+  date: '2026-12-01',
+  status: 'leave',
+  today: '2026-11-16',
+  cal,
+});
+check(
+  '未来月份仍拒绝请假',
+  futureMonthLeave.ok === false && futureMonthLeave.code === 'future',
+);
+
 const holidayRecord = computeMonthStats({
   month: '2026-10',
   today: '2026-11-16',

@@ -88,6 +88,14 @@ function showToast(message) {
   }, 2000);
 }
 
+function hideToast() {
+  els.toast.hidden = true;
+  if (toastTimer) {
+    window.clearTimeout(toastTimer);
+    toastTimer = null;
+  }
+}
+
 function resetStats() {
   els.statsLine1.textContent = '';
   els.statsLine1.title = '';
@@ -166,17 +174,17 @@ function renderStats() {
   switch (stats.result_status) {
     case 'needs_days':
       line2 = `占比 ${rate}% · 达标需 ${stats.need} 天 · 还需 ${stats.remain} 天`;
-      line3 = `剩余 ${stats.remaining_workdays} 个工作日，来得及`;
+      line3 = `剩余 ${stats.remaining_workdays} 个可用工作日，来得及`;
       break;
     case 'too_late':
       line2 = `占比 ${rate}% · 达标需 ${stats.need} 天 · 还需 ${stats.remain} 天`;
-      line3 = `剩余 ${stats.remaining_workdays} 个工作日，已来不及`;
+      line3 = `剩余 ${stats.remaining_workdays} 个可用工作日，已来不及`;
       line3Class = 'is-late';
       break;
     case 'qualified':
       line2 = `占比 ${rate}% · 达标需 ${stats.need} 天`;
       if (monthKind(state.viewMonth, state.today) === 'current') {
-        line3 = `已合格 · 剩余 ${stats.remaining_workdays} 个工作日`;
+        line3 = `已合格 · 剩余 ${stats.remaining_workdays} 个可用工作日`;
         if (stats.on_site_days > stats.need) {
           line3 += ` · 超出 ${stats.on_site_days - stats.need} 天`;
         }
@@ -368,29 +376,43 @@ function closeSheets() {
   els.sheetBackdrop.hidden = true;
   els.actionSheet.hidden = true;
   els.invalidSheet.hidden = true;
-  els.actionSheet.classList.remove('is-invalid-only');
+  els.actionSheet.classList.remove('is-invalid-only', 'is-future-only');
   state.selectedDate = null;
 }
 
-function openActionSheet(date, invalid) {
+function openActionSheet(date, mode = 'normal') {
   const record = state.records.get(date);
+  const isInvalid = mode === 'invalid';
+  const isFuture = mode === 'future';
   state.selectedDate = date;
   els.sheetTitle.textContent = `${formatDisplayDate(date, state.today)} ${formatWeekdayCn(date)}`;
 
-  if (invalid && record) {
+  if (isInvalid && record) {
     els.sheetSubtitle.textContent = `当前：${statusText(record.status)}（已失效，不计入统计）`;
+  } else if (isFuture) {
+    els.sheetSubtitle.textContent = record
+      ? `未来工作日仅可标记请假 · 当前：${statusText(record.status)}`
+      : '未来工作日仅可标记请假';
   } else if (record) {
     els.sheetSubtitle.textContent = `当前：${statusText(record.status)}`;
   } else {
     els.sheetSubtitle.textContent = '当前：未标记';
   }
 
-  els.actionSheet.classList.toggle('is-invalid-only', Boolean(invalid));
+  els.actionSheet.classList.toggle('is-invalid-only', isInvalid);
+  els.actionSheet.classList.toggle('is-future-only', isFuture);
   for (const button of els.actionButtons) {
     const action = button.dataset.action;
-    button.classList.toggle('is-current', !invalid && Boolean(record) && action === record.status);
-    if (action === 'on_site' || action === 'leave') {
-      button.hidden = Boolean(invalid);
+    const current =
+      !isInvalid &&
+      Boolean(record) &&
+      action === record.status &&
+      (!isFuture || action === 'leave');
+    button.classList.toggle('is-current', current);
+    if (action === 'on_site') {
+      button.hidden = isInvalid || isFuture;
+    } else if (action === 'leave') {
+      button.hidden = isInvalid;
     } else {
       button.hidden = false;
     }
@@ -411,19 +433,33 @@ function handleDateClick(date) {
 
   const record = state.records.get(date);
   const future = date > state.today;
+  const currentMonth = state.viewMonth === monthKeyOf(state.today);
+  const futureMonth = monthKind(state.viewMonth, state.today) === 'future';
   const workday = isWorkday(date, state.cal);
   const recordInvalid =
-    Boolean(record) && (future || !workday || !isValidStatus(record.status));
+    Boolean(record) &&
+    (futureMonth ||
+      !workday ||
+      !isValidStatus(record.status) ||
+      (future && record.status !== 'leave'));
 
   if (recordInvalid) {
-    openActionSheet(date, true);
+    openActionSheet(date, 'invalid');
     return;
   }
   if (workday && !future) {
-    openActionSheet(date, false);
+    openActionSheet(date, 'normal');
     return;
   }
-  showToast(future ? '未来日期不可记录' : '非工作日不可记录');
+  if (future && currentMonth && workday) {
+    openActionSheet(date, 'future');
+    return;
+  }
+  if (future && !currentMonth) {
+    showToast('未来日期不可记录');
+    return;
+  }
+  showToast('非工作日不可记录');
 }
 
 async function commitStatus(date, status) {
@@ -446,7 +482,7 @@ async function commitStatus(date, status) {
     state.today = today;
     closeSheets();
     renderAll();
-    showToast(`已标记 ${formatDisplayDate(date, state.today)} ${statusText(status)}`);
+    hideToast();
   } catch (error) {
     console.error(error);
     showToast('保存失败，请重试');
@@ -457,7 +493,7 @@ async function clearSelected(date) {
   const record = state.records.get(date);
   if (!record) {
     closeSheets();
-    showToast('该日无记录');
+    hideToast();
     return;
   }
 
@@ -466,7 +502,7 @@ async function clearSelected(date) {
     state.records.delete(date);
     closeSheets();
     renderAll();
-    showToast(`已清除 ${formatDisplayDate(date, state.today)} 记录`);
+    hideToast();
   } catch (error) {
     console.error(error);
     showToast('保存失败，请重试');
@@ -507,7 +543,7 @@ async function clearInvalidRecord(date) {
     } else {
       closeSheets();
     }
-    showToast(`已清除 ${formatDisplayDate(date, state.today)} 记录`);
+    hideToast();
   } catch (error) {
     console.error(error);
     showToast('保存失败，请重试');

@@ -54,7 +54,7 @@ button {
   width: 100%;
   max-width: 430px;
   margin: 0 auto;
-  padding: max(8px, env(safe-area-inset-top)) 10px max(8px, env(safe-area-inset-bottom));
+  padding: max(8px, env(safe-area-inset-top)) 10px calc(56px + env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -400,6 +400,10 @@ button {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
   margin-top: 14px;
+}
+
+.action-sheet.is-future-only .sheet-actions {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .action-sheet.is-invalid-only .sheet-actions {

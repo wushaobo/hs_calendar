@@ -108,7 +108,10 @@ export function validateMarkInput({ date, status, today, cal }) {
   if (!isDateString(today)) {
     return { ok: false, code: 'bad_today', message: '今天日期无效' };
   }
-  if (date > today) {
+  if (
+    date > today &&
+    (status !== 'leave' || monthKeyOf(date) !== monthKeyOf(today))
+  ) {
     return { ok: false, code: 'future', message: '未来日期不可记录' };
   }
   if (!isWorkday(date, cal)) {
@@ -137,19 +140,25 @@ export function computeMonthStats({ month, today, records, cal }) {
 
   let leaveDays = 0;
   let onSiteDays = 0;
+  let futureLeaveDays = 0;
   const invalidRecords = [];
 
   for (const record of byDate.values()) {
+    // 未来只允许请假（当前月）；未来到岗仍视为失效记录。
     const valid =
       workdaySet.has(record.date) &&
-      record.date <= today &&
-      VALID_STATUSES.has(record.status);
+      VALID_STATUSES.has(record.status) &&
+      (record.date <= today || record.status === 'leave');
     if (!valid) {
       invalidRecords.push({ date: record.date, status: record.status });
       continue;
     }
-    if (record.status === 'leave') leaveDays += 1;
-    else onSiteDays += 1;
+    if (record.status === 'leave') {
+      leaveDays += 1;
+      if (record.date > today) futureLeaveDays += 1;
+    } else {
+      onSiteDays += 1;
+    }
   }
 
   invalidRecords.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
@@ -196,7 +205,12 @@ export function computeMonthStats({ month, today, records, cal }) {
   let resultStatus;
 
   if (kind === 'current') {
-    remainingWorkdays = countWorkdaysBetween(today, bounds.end, cal);
+    // S 表示今天到月末还能到岗的可用工作日：扣除已预排的未来请假。
+    // 今天的请假不扣，沿用「S 含今天、不因今天已有记录扣减」的既有口径。
+    remainingWorkdays = Math.max(
+      0,
+      countWorkdaysBetween(today, bounds.end, cal) - futureLeaveDays,
+    );
     feasible = remainingWorkdays >= remain;
     if (remain === 0) resultStatus = 'qualified';
     else if (!feasible) resultStatus = 'too_late';

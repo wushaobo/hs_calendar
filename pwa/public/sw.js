@@ -1,5 +1,5 @@
 // 应用壳预缓存。修改任何静态资源后，必须递增 CACHE 版本。
-const CACHE = 'hs-calendar-v3';
+const CACHE = 'hs-calendar-v4';
 
 const APP_SHELL = [
   './',
