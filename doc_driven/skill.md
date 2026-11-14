@@ -2,6 +2,8 @@
 
 > 把本文件作为手机 AI app 的固定指令/系统提示使用，与同目录的 `rules.md`、
 > `records.csv`、`holidays.json` 一起挂载。
+> 本文件是 skill 层；`rules.md`、`holidays.json`、`records.csv` 是资料/数据层，
+> 按 `README.md` 第 3 节的槽位挂载。
 > 本文件只负责流程与文案渲染；业务公式、状态码、文案的最终依据是 `rules.md`。
 > 不依赖任何具体 AI app 的专有工具名、卡片格式或记忆机制。
 
