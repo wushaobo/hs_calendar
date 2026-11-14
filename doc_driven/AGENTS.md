@@ -1,22 +1,9 @@
 # 方案：doc_driven（到岗会疯）
 
 > 当前 session 只实现本目录，不修改 `requirement/` 或其他方案目录。
-> 本方案不写服务端、不做机器人、不做第三方平台集成；用手机 AI app + 预置文档 + 一个通用 skill 替代传统程序。
+> 不写服务端、不做机器人、不做第三方平台集成。
 
-## 1. 方案定位
-
-doc_driven 把「程序」拆成可被手机 AI app 读取和执行的文档：
-
-- **记录 CSV**：到岗/请假数据，一天一行，可增删改查。
-- **公休假 JSON**：只读配置，复制自 `../requirement/holidays.json`。
-- **规则 MD**：业务口径、公式、字段、日期规则、验收示例。
-- **skill**：把用户的短指令映射为固定操作，固定处理流程和回复格式。
-- **README**：如何把文件加载到手机 AI app、如何备份、如何更新节假日。
-
-目标：用户在手机 AI app 里用尽量短的输入完成查看和增删改；skill 承担「程序」的角色。
-文档和 skill 不依赖任何具体 AI app 的专有格式、工具名或记忆机制。
-
-## 2. 开始前按顺序读
+## 1. 开始前按顺序读
 
 1. 本文件
 2. `../AGENTS.md`
@@ -28,60 +15,79 @@ doc_driven 把「程序」拆成可被手机 AI app 读取和执行的文档：
 8. `../requirement/holidays.json`
 9. `../requirement/test-cases.json`
 
-## 3. 交付物
+## 2. 方案范围与运行模型
 
-| 文件 | 作用 | 备注 |
-|---|---|---|
-| `records.csv` | 记录数据 | 表头 + 数据行；字段与 DayRecord 对齐 |
-| `holidays.json` | 公休假与调休配置 | 只读；复制 `requirement/holidays.json`，记录 dataVersion |
-| `rules.md` | 规则说明 | 自包含，供 AI app 读取；不依赖仓库路径 |
-| `skill.md` | 通用 skill / 系统提示 | 短指令、意图识别、处理流程、回复模板、错误处理 |
-| `README.md` | 使用说明 | 加载、备份、更新节假日、已知限制 |
-| `AGENTS.md` | 本文件 | 方案入口 |
+- 手机 AI app + skill 包 + 资料库；单用户、对话式。
+- skill 包（云端沙箱只读）：`hs-calendar/SKILL.md`、`references/rules.md`、
+  `data/holidays.json`。
+- 资料库（可读写）：`records.csv`；skill 指挥 AI agent 通过 app 文件工具读写。
+- 业务口径以 `references/rules.md` 为准；流程、模板、错误处理以 `SKILL.md` 为准。
+  本文件只引用，不复述。
+- 不写服务端、不做机器人/多用户/提醒/推送/导出/云同步；不绑定具体 app 的专有格式。
 
-文件名和目录结构可在实现时调整，但必须保持「数据文件 + 规则文件 + skill + 使用说明」的分工。
+## 3. 交付物与落位
 
-## 4. 职责分工
+| 路径 | 角色 | 读写 | 说明 |
+|---|---|---|---|
+| `hs-calendar/SKILL.md` | skill 入口 | 包内只读 | 流程、指令、模板、错误处理 |
+| `hs-calendar/references/rules.md` | 业务规则 | 包内只读 | 唯一业务口径 |
+| `hs-calendar/data/holidays.json` | 节假日配置 | 包内只读 | 记录 dataVersion |
+| `records.csv` | 上传模板 | 本目录文件 | 仅表头；上传到资料库后成为运行数据 |
+| `README.md` | 人类使用说明 | 不交付 | 安装、使用、备份、限制 |
+| `verification.md` | 验证记录 | 不交付 | 12 用例 + 流程用例 |
+| `AGENTS.md` | 本文件 | 不交付 | session 入口 |
 
-- `rules.md`：唯一业务口径来源。公式、工作日集合、CSV/JSON 字段、状态码、日期规则、验收示例。
-- `skill.md`：程序替代。读取规则和数据，识别短指令意图，执行增删改，按固定模板回复；不重新定义业务规则，只引用 `rules.md`。
-- `README.md`：人类使用说明。如何把文件放进 AI app 的会话/项目，如何开始一次对话，如何备份/更新。
-- `records.csv` / `holidays.json`：数据与配置。skill 不得把记录写到别的文件。
+“不交付”指不把文件上传到 AI app，仅保留在仓库。
 
-## 5. skill 设计要求
+硬性约束：
 
-- 短指令 + 自然语言双通道；具体指令表在实现时确定。
-- 每次回答前读取 `rules.md`、`records.csv`、`holidays.json`；不依赖上一次对话的记忆。
-- 写入规则：同一日期只保留一行；状态只能 `on_site` / `leave`；写后按日期排序；保留表头。
-- 计算严格按 `rules.md`；不得自创公式或状态码。
-- 回复固定模板：统计 + 日期明细；历史月不展示「是否来得及」。
-- 错误固定文案：未来日期 / 非工作日 / 日期格式错误 / 缺少文件 / CSV 格式错误 / 数据异常。
-- 如果当前 AI app 不能直接写文件：输出变更行或完整 CSV，让用户替换；不要假装已经写入。
-- 不绑定具体 AI app：不使用某家 app 的专有工具名、卡片格式或记忆机制。
-- 不把聊天内容当作唯一数据源；CSV 才是记录的唯一来源。
+- skill 包内不得出现 `records.csv`。
+- 运行时 `records.csv` 只在资料库，不在仓库或 skill 包。
+- 不要求用户手动复制、保存、替换 CSV；写入通过 app 文件工具完成。
+- 文件按名称 `records.csv` 和表头识别；不使用相对/绝对路径或“同目录”。
 
-## 6. 实现步骤
-
-1. 复制 `../requirement/holidays.json` 为 `holidays.json`，保持只读。
-2. 创建 `records.csv`，至少包含表头 `date,status,updatedAt`；空表即可，格式由 `rules.md` 说明。
-3. 写 `rules.md`：从 requirement 文档提炼成自包含规则；包含公式、工作日集合、CSV/JSON schema、状态码、日期规则、2–3 个算例。
-4. 写 `skill.md`：按第 5 节设计；短指令表、意图映射、文件读写流程、回复模板、错误处理。
-5. 写 `README.md`：加载方式、使用流程、备份、更新节假日、已知限制。
-6. 用 `../requirement/test-cases.json` 的 12 个用例手动/模拟跑一遍 skill；确认 CSV 变更和回复一致。
-7. 检查不依赖任何特定 AI app。
-
-## 7. 不可越界
+## 4. 不可越界
 
 - `requirement/` 只读；不改其他方案目录。
-- 不写服务端、不做机器人、不做多用户、不做提醒/推送。
-- 不把数据发到外部服务；不做云同步。
+- 不写服务端、不做机器人、不做多用户、不做提醒/推送/导出、不做云同步。
+- 不建第二个数据文件；不把聊天内容当作数据源。
 - 不引入 app 专有格式；skill 和文档必须可移植。
+- 不修改 skill 包内文件。
+- 通用 session 规则见 `../AGENTS.md`；本文件只写 doc_driven 特有约束。
 
-## 8. 完成定义
+## 5. 实现约定
 
-- 五个文件齐全：`records.csv`、`holidays.json`、`rules.md`、`skill.md`、`README.md`。
-- 12 个黄金用例通过（手动模拟即可）。
+- `SKILL.md` 只做流程与文案渲染；公式、状态码、回复结构以 `rules.md` 为准。
+- 数据文件契约以 `rules.md` 第 8.1 节为准，不在本文件复述。
+- 用户可见错误文案与回复模板以 `SKILL.md` 第 10、11、12 节为准，不在本文件复述。
+- 写入必须通过 app 资料库文件工具，并在写后回读确认；写失败明确报错，不要求
+  用户手工保存。
+- 版本常量权威是 `rules.md` 第 1 节与 `holidays.json`；README 第 2 节只是快照。
+
+## 6. 修改与验证
+
+1. 先读 `requirement/` 与 `hs-calendar/references/rules.md`。
+2. 修改 skill 包内容；保持 `rules.md` 为唯一业务口径。
+3. 跑 `../requirement/test-cases.json` 的 12 条用例。
+4. 更新 `verification.md` 与 README 的版本/变更记录。
+5. 若规则变更，按 `../AGENTS.md` 的流程先在需求 session 确认并递增 specVersion；
+   不要只改 `rules.md`。
+6. 确认未改 `requirement/` 或其他方案目录。
+
+## 7. 完成定义
+
+- skill 包 3 文件齐全，包内无 `records.csv`。
+- 12 条黄金用例通过；证据在 `verification.md`。
 - 手机 AI app 中能用短指令完成：查看本月、记录到岗/请假、取消、查历史。
-- skill 能处理「不能写文件」的降级路径。
-- README 说明清楚如何加载、备份、更新节假日。
+- 写入通过 app 资料库文件工具；写失败能明确报错，不要求用户手工保存。
+- README 覆盖：上传、首次确认、日常使用、数据与备份、更新节假日、测试、版本、
+  已知限制。
 - 未修改 `requirement/` 或其他方案目录。
+
+## 8. 文档入口
+
+- `README.md`：人类使用说明。
+- `hs-calendar/SKILL.md`：运行时行为、指令、模板、错误处理。
+- `hs-calendar/references/rules.md`：唯一业务口径。
+- `verification.md`：验证证据。
+- `../AGENTS.md`：跨方案 session 约定。
