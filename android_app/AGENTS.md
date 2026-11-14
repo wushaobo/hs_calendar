@@ -29,5 +29,5 @@
 
 ## 交付
 
-- 方案 `README.md`：如何构建运行、如何测试、数据位置、`specVersion=1`、`holiday dataVersion=2026.1`、已知限制。
+- 方案 `README.md`：如何构建运行、如何测试、数据位置、`specVersion=2`、`holiday dataVersion=2026.1`、已知限制。
 - 公休假/调休 JSON 放在 assets，运行时不依赖 `../requirement`。

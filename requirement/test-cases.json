@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "specVersion": 1,
+  "specVersion": 2,
   "holidayDataVersion": "2026.1",
   "timezone": "Asia/Shanghai",
   "threshold": 0.3,
@@ -363,6 +363,76 @@
         "result_status": "needs_days",
         "invalid_records": [
           { "date": "2026-11-14", "status": "on_site" }
+        ]
+      }
+    },
+    {
+      "id": "2026-11-future-leave",
+      "description": "2026-11-14 预标记 11/27 未来请假，need 从 7 降到 6",
+      "month": "2026-11",
+      "today": "2026-11-14",
+      "records": [
+        { "date": "2026-11-27", "status": "leave" }
+      ],
+      "expected": {
+        "w0": 21,
+        "leave_days": 1,
+        "working_days": 20,
+        "on_site_days": 0,
+        "need": 6,
+        "remain": 6,
+        "rate_percent": 0.0,
+        "remaining_workdays": 10,
+        "feasible": true,
+        "result_status": "needs_days",
+        "invalid_records": []
+      }
+    },
+    {
+      "id": "2026-11-future-onsite-invalid",
+      "description": "2026-11-14 预标记 11/27 未来到岗，记录无效",
+      "month": "2026-11",
+      "today": "2026-11-14",
+      "records": [
+        { "date": "2026-11-27", "status": "on_site" }
+      ],
+      "expected": {
+        "w0": 21,
+        "leave_days": 0,
+        "working_days": 21,
+        "on_site_days": 0,
+        "need": 7,
+        "remain": 7,
+        "rate_percent": 0.0,
+        "remaining_workdays": 11,
+        "feasible": true,
+        "result_status": "needs_days",
+        "invalid_records": [
+          { "date": "2026-11-27", "status": "on_site" }
+        ]
+      }
+    },
+    {
+      "id": "2026-11-future-leave-nonworkday-invalid",
+      "description": "2026-11-14 预标记 11/28（周六）请假，记录无效",
+      "month": "2026-11",
+      "today": "2026-11-14",
+      "records": [
+        { "date": "2026-11-28", "status": "leave" }
+      ],
+      "expected": {
+        "w0": 21,
+        "leave_days": 0,
+        "working_days": 21,
+        "on_site_days": 0,
+        "need": 7,
+        "remain": 7,
+        "rate_percent": 0.0,
+        "remaining_workdays": 11,
+        "feasible": true,
+        "result_status": "needs_days",
+        "invalid_records": [
+          { "date": "2026-11-28", "status": "leave" }
         ]
       }
     }
