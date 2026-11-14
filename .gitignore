@@ -5,3 +5,4 @@
 .DS_Store
 .env
 tmp
+.claude-sessions.md

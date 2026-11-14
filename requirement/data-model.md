@@ -10,13 +10,13 @@
 |---|---|---|
 | `date` | string `YYYY-MM-DD` | 主键；`Asia/Shanghai` 日历日 |
 | `status` | enum | `on_site`（到岗）或 `leave`（请假） |
-| `updatedAt` | string ISO-8601 | 最后修改时间，便于排查 |
+| `updated_at` | string ISO-8601 | 最后修改时间，便于排查 |
 
 约束：
 
 - 一天最多一条记录。
 - 只能存在于工作日（按当前公休假 + 调休补班日配置判定）。
-- 不允许未来日期。
+- 未来日期仅允许 `status=leave`；不允许未来 `on_site`。
 - 到岗与请假互斥。
 
 ### 1.2 Holiday
@@ -63,7 +63,7 @@
 - `R = A / W`
 - `need = ceil(0.3 × W)`，整数实现 `(3W + 9) // 10`
 - `remain = max(0, need − A)`
-- `S`：今天（含）到月末的工作日数（含调休补班日）；仅当前月计算
+- `S`：今天（含）到月末的工作日数（含调休补班日）− 未来请假日数；仅当前月计算
 - `feasible = S >= remain`；仅当前月计算
 - `result_status`：`qualified` / `needs_days` / `too_late` / `no_need` / `below_target_ended` / `data_error`
 
@@ -121,7 +121,7 @@
 |---|---|
 | PWA | IndexedDB；公休假/调休 JSON 构建时打包 |
 | Android | Room/SQLite；`holidays.json` 放 assets，首启导入 |
-| 飞书 MCP | 服务端 SQLite 或 JSON 文件 |
+| doc_driven | 本地记录 CSV（DayRecord）+ 只读公休假 JSON |
 | Hermes/Telegram | 服务端 SQLite 或 JSON 文件 |
 
 四方案数据各自独立，不做共享数据库或同步。
@@ -130,7 +130,7 @@
 
 - 日期以 `YYYY-MM-DD` 字符串保存，不做时区换算。
 - 「今天」按 `Asia/Shanghai` 计算。
-- 一周从周一开始。
+- 一周从周日开始（仅影响日历列顺序，工作日仍为周一至周五）。
 - 月份统计按自然月（1 日至月末）。
 
 ## 6. 失效记录
@@ -143,7 +143,7 @@
 - 不自动删除用户数据。
 - 反之，若原本不可标记的日期因调休配置变成工作日，允许补录。
 
-未来日期的记录同样视为无效记录；正常写入路径应直接拒绝，不进入存储。
+未来 `on_site` 记录视为无效；未来 `leave` 记录有效。未来非工作日的 `leave` 同样无效。正常写入路径应拒绝未来 `on_site`。
 
 ## 7. 数据量
 
