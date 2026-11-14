@@ -11,7 +11,7 @@
 |---|---|---|---|
 | `pwa/` | 手机浏览器 / 可安装 PWA，月历点选 | 本地存储，离线可用 | 未开始 |
 | `android_app/` | Android 原生 App，月历点选 | 本地数据库 | 未开始 |
-| `feishu_mcp/` | 手机飞书聊天窗口，对话式 | 服务端 | 未开始 |
+| `doc_driven/` | 手机 AI app + 文档/skill，对话式 | 本地 CSV + 只读 JSON | 未开始 |
 | `hermes/` | 手机 Telegram Bot，对话式 | 服务端 | 未开始 |
 
 四个方案核心功能对齐（记录、统计、历史查询），数据各自独立。
@@ -21,7 +21,7 @@
 进入某个方案目录后启动 agent：
 
 ```bash
-cd pwa        # 或 android_app / feishu_mcp / hermes
+cd pwa        # 或 android_app / doc_driven / hermes
 claude
 ```
 

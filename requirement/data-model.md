@@ -121,7 +121,7 @@
 |---|---|
 | PWA | IndexedDB；公休假/调休 JSON 构建时打包 |
 | Android | Room/SQLite；`holidays.json` 放 assets，首启导入 |
-| 飞书 MCP | 服务端 SQLite 或 JSON 文件 |
+| doc_driven | 本地记录 CSV（DayRecord）+ 只读公休假 JSON |
 | Hermes/Telegram | 服务端 SQLite 或 JSON 文件 |
 
 四方案数据各自独立，不做共享数据库或同步。

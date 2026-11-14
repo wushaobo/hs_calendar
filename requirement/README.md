@@ -1,6 +1,6 @@
 # 到岗会疯（hs_calendar）共通需求
 
-> 本目录是四个实现方案（`pwa/`、`android_app/`、`feishu_mcp/`、`hermes/`）的唯一口径来源。
+> 本目录是四个实现方案（`pwa/`、`android_app/`、`doc_driven/`、`hermes/`）的唯一口径来源。
 > 任何实现细节与本文冲突时，以本文为准。
 > 实现 session 的启动说明见根目录 [AGENTS.md](../AGENTS.md)。
 >

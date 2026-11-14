@@ -124,6 +124,22 @@
 - 公式、`S`、状态码、数据模型、黄金用例均不变。
 - 本次为展示规则调整，不改数据口径，`specVersion` 保持 `1`。
 
+## 2026-11-14 第八轮确认：用 doc_driven 替换 feishu_mcp
+
+| 问题 | 用户选择 |
+|---|---|
+| feishu_mcp 方案 | **去掉**，太笨重 |
+| 替代方案 | **doc_driven**：手机 AI app + 记录 CSV + 公休假 JSON + 规则 MD + skill |
+| 本次范围 | 替换共享文档、删除 `feishu_mcp/`、新建 `doc_driven/` 及其 `AGENTS.md` |
+| skill/CSV 细节 | 留到 doc_driven 实现 session 再讨论 |
+| AI app 绑定 | 不绑定；具体 app 仅是尝试对象 |
+
+影响：
+
+- 四方案改为 PWA、Android、doc_driven、Telegram Bot。
+- 业务公式、数据口径、黄金用例不变；`specVersion` 保持 `1`。
+- `doc_driven/AGENTS.md` 已建立，模板文件留给后续实现。
+
 ## 结论摘要
 
 - 产品展示名：**到岗会疯**；短名 **到岗**；技术标识 **hs_calendar**。
@@ -131,7 +147,7 @@
 - `W = max(0, W0 − L)`；`W0` = 工作日集合的日期数，工作日集合 =（周一至周五 − 公休假）∪ 调休补班日。
 - `S` = 今天（含）到月末的工作日数；`feasible = S ≥ remain`；仅当前月计算。
 - 只允许记录工作日、今天及以前；历史月可改；未来月只读。
-- 四方案：PWA、Android、飞书 MCP、Telegram Bot；核心功能对齐，数据各自独立。
+- 四方案：PWA、Android、doc_driven、Telegram Bot；核心功能对齐，数据各自独立。
 - 只在手机上使用；单用户；不做提醒、小组件、导出、同步。
 - 四方案 session 只读 `requirement/`，共享 spec、节假日 JSON 和黄金用例；规则变更需递增 specVersion。
 - `holidays.json` 已预置 2026 全年公休假与调休补班日（dataVersion `2026.1`）；2027 待补。

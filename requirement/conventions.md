@@ -1,7 +1,7 @@
 # 到岗会疯 — 共享命名与实现契约
 
 > Spec 版本：`1`
-> 本文件是四个方案（PWA / Android / 飞书 MCP / Telegram）共同遵守的外部契约。
+> 本文件是四个方案（PWA / Android / doc_driven / Telegram）共同遵守的外部契约。
 > 业务规则以 [README.md](README.md) 为准；本文件补充命名、字段、文案、存储和伪代码。
 
 ## 1. 命名与标识
@@ -14,8 +14,7 @@
 | PWA `name` / `short_name` | 到岗会疯 / 到岗 |
 | Android `app_name` | 到岗会疯 |
 | Android `applicationId` | `com.wushaobo.hs_calendar`（若工具不接受下划线，归一化为 `com.wushaobo.hscalendar`） |
-| 飞书应用/机器人名 | 到岗会疯 |
-| MCP server 名 | `hs_calendar` |
+| doc_driven 文件 | 记录 CSV、公休假 JSON、规则 MD、skill（具体文件名实现时确认） |
 | Telegram 机器人显示名 | 到岗会疯 |
 | Telegram 用户名 | 由 BotFather 注册；建议 `@hs_calendar_bot`，以实际唯一性为准 |
 | SQLite 数据库 | `hs_calendar.db` |
@@ -33,11 +32,8 @@
 ```text
 HS_CALENDAR_TZ=Asia/Shanghai
 HS_CALENDAR_DB_PATH=./data/hs_calendar.db
-HS_CALENDAR_ALLOWED_OPEN_IDS=...
 HS_CALENDAR_ALLOWED_CHAT_IDS=...
 HS_CALENDAR_BOT_TOKEN=...
-HS_CALENDAR_FEISHU_APP_ID=...
-HS_CALENDAR_FEISHU_APP_SECRET=...
 ```
 
 ## 2. 业务口径（冻结）
@@ -114,7 +110,7 @@ feasible = (S ≥ remain)                      # 仅当前月
 | `result_status` | string | 见 2.4 状态码 |
 | `invalid_records` | array | 无效记录 `{date, status}` |
 
-记录字段：`date`（`YYYY-MM-DD`）、`status`（`on_site` / `leave`）、`updated_at`（ISO-8601）。
+记录字段：`date`（`YYYY-MM-DD`）、`status`（`on_site` / `leave`）、`updatedAt`（ISO-8601）。
 
 ## 4. 展示文案与错误
 
@@ -156,7 +152,7 @@ feasible = (S ≥ remain)                      # 仅当前月
 |---|---|
 | PWA | IndexedDB `hs_calendar`；对象仓库 `day_records`、`holidays`、`workday_overrides`；localStorage 前缀 `hs_calendar.` |
 | Android | SQLite/Room `hs_calendar.db`；表 `day_records`、`holidays`、`workday_overrides`、`settings` |
-| 飞书 MCP | 服务端 SQLite `hs_calendar.db` 或等价 JSON |
+| doc_driven | 本地记录 CSV + 只读公休假 JSON；无服务端 |
 | Hermes/Telegram | 服务端 SQLite `hs_calendar.db` 或等价 JSON |
 
 四个方案数据独立；不得共享数据库、不得跨方案读写。
@@ -176,15 +172,14 @@ feasible = (S ≥ remain)                      # 仅当前月
 
 同时支持自然语言：「今天到岗」「11月12日请假」「取消11月10日」「看下10月」。
 
-### 6.2 飞书
+### 6.2 doc_driven
 
-按 [journeys.md](journeys.md) 的自然语言意图和快捷按钮：
-
-`[今天到岗] [今天请假] [本月统计] [取消今天]`
+由手机 AI app 读取规则 MD、skill、记录 CSV、公休假 JSON 执行。
+具体短指令、文件写入方式和回复形式在 doc_driven 实现 session 中确定，不写入共享契约。
 
 ### 6.3 回复结构
 
-两套聊天方案统一为：
+聊天/文档方案统一为：
 
 ```text
 2026 年 11 月

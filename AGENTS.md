@@ -5,7 +5,7 @@
 ## 1. 项目一句话
 
 个人到岗率追踪工具：`当月到岗天数 ÷ 当月工作日天数 ≥ 30%`，随时回答「本月已到岗几天、还需几天」。
-同一需求有四个独立实现：`pwa/`、`android_app/`、`feishu_mcp/`、`hermes/`。
+同一需求有四个独立实现：`pwa/`、`android_app/`、`doc_driven/`、`hermes/`。
 
 ## 2. Session 边界
 
