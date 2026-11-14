@@ -34,7 +34,7 @@
 | `hs-calendar/data/holidays.json` | 节假日配置 | 包内只读 | 记录 dataVersion |
 | `records.csv` | 上传模板 | 本目录文件 | 仅表头；上传到资料库后成为运行数据 |
 | `README.md` | 人类使用说明 | 不交付 | 安装、使用、备份、限制 |
-| `verification.md` | 验证记录 | 不交付 | 12 用例 + 流程用例 |
+| `verification.md` | 验证记录 | 不交付 | 15 用例 + 流程用例 |
 | `AGENTS.md` | 本文件 | 不交付 | session 入口 |
 
 “不交付”指不把文件上传到 AI app，仅保留在仓库。
@@ -68,7 +68,7 @@
 
 1. 先读 `requirement/` 与 `hs-calendar/references/rules.md`。
 2. 修改 skill 包内容；保持 `rules.md` 为唯一业务口径。
-3. 跑 `../requirement/test-cases.json` 的 12 条用例。
+3. 跑 `../requirement/test-cases.json` 的 15 条用例。
 4. 更新 `verification.md` 与 README 的版本/变更记录。
 5. 若规则变更，按 `../AGENTS.md` 的流程先在需求 session 确认并递增 specVersion；
    不要只改 `rules.md`。
@@ -77,7 +77,7 @@
 ## 7. 完成定义
 
 - skill 包 3 文件齐全，包内无 `records.csv`。
-- 12 条黄金用例通过；证据在 `verification.md`。
+- 15 条黄金用例通过；证据在 `verification.md`。
 - 手机 AI app 中能用短指令完成：查看本月、记录到岗/请假、取消、查历史。
 - 写入通过 app 资料库文件工具；写失败能明确报错，不要求用户手工保存。
 - README 覆盖：上传、首次确认、日常使用、数据与备份、更新节假日、测试、版本、
