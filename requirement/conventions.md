@@ -1,6 +1,6 @@
 # 到岗会疯 — 共享命名与实现契约
 
-> Spec 版本：`1`
+> Spec 版本：`2`
 > 本文件是四个方案（PWA / Android / doc_driven / Telegram）共同遵守的外部契约。
 > 业务规则以 [README.md](README.md) 为准；本文件补充命名、字段、文案、存储和伪代码。
 
@@ -24,7 +24,7 @@
 | 时区 | `Asia/Shanghai` |
 | 语言 | `zh-CN` |
 | 阈值 | `0.30` |
-| Spec 版本 | `1` |
+| Spec 版本 | `2` |
 | 节假日数据版本 | `2026.1` |
 
 环境变量（不写真实密钥）：
@@ -60,11 +60,11 @@ W = max(0, W0 − L)
 need = ceil(0.3 × W)          # 整数实现：(3W + 9) // 10
 remain = max(0, need − A)
 R = A / W
-S = count(workdaySet ∩ [today, monthEnd])   # 仅当前月；含今天
+S = count(workdaySet ∩ [today, monthEnd]) − count(future leave days)   # 仅当前月；含今天
 feasible = (S ≥ remain)                      # 仅当前月
 ```
 
-- `S` **包含今天**，且不因今天已有记录而扣减；这是刻意的简化口径。
+- `S` **包含今天**，且不因今天已有记录而扣减；但会扣除未来请假日。未来请假 = 日期 > today 且 status=leave 的有效记录。
 - 分母始终是整月工作日，不按「截至今天」截断。
 - `rate_percent` 四舍五入保留 1 位小数，0.5 向上；`W = 0` 时为 `null`。
 
@@ -73,8 +73,8 @@ feasible = (S ≥ remain)                      # 仅当前月
 有效记录必须同时满足：
 
 1. 日期属于当月工作日集合；
-2. 日期 ≤ 今天；
-3. 状态为 `on_site` 或 `leave`。
+2. 状态为 `on_site` 或 `leave`；
+3. 若日期 > 今天，只有 `leave` 有效；未来 `on_site` 无效；若日期 ≤ 今天，两种状态均有效。
 
 不满足的记录进入 `invalid_records`，不计入 A/L/W，但不清除用户数据。
 
@@ -110,7 +110,7 @@ feasible = (S ≥ remain)                      # 仅当前月
 | `result_status` | string | 见 2.4 状态码 |
 | `invalid_records` | array | 无效记录 `{date, status}` |
 
-记录字段：`date`（`YYYY-MM-DD`）、`status`（`on_site` / `leave`）、`updatedAt`（ISO-8601）。
+记录字段：`date`（`YYYY-MM-DD`）、`status`（`on_site` / `leave`）、`updated_at`（ISO-8601）。
 
 ## 4. 展示文案与错误
 
@@ -137,7 +137,8 @@ feasible = (S ≥ remain)                      # 仅当前月
 
 | 场景 | 文案 |
 |---|---|
-| 未来日期 | 未来日期不可记录 |
+| 未来工作日标记到岗 | 未来工作日只能标记请假，不能标记到岗 |
+| 未来月份 | 未来月份只读 |
 | 周末 / 公休假 | 非工作日不可记录 |
 | 日期格式错误 | 日期格式应为 YYYY-MM-DD |
 | 无权限 | 未授权 |
@@ -174,7 +175,7 @@ feasible = (S ≥ remain)                      # 仅当前月
 
 ### 6.2 doc_driven
 
-由手机 AI app 读取规则 MD、skill、记录 CSV、公休假 JSON 执行。
+由手机 AI app 读取规则 MD、skill、记录 CSV、公休假 JSON 执行。未来工作日只允许请假，不能到岗；未来月份只读。
 具体短指令、文件写入方式和回复形式在 doc_driven 实现 session 中确定，不写入共享契约。
 
 ### 6.3 回复结构
@@ -213,7 +214,7 @@ monthStats(month, today, records, calendar):
   valid = []
   invalid = []
   for r in records where r.date in month:
-    if r.date in workdays and r.date <= today:
+    if r.date in workdays and (r.date <= today or r.status == "leave"):
       valid.append(r)
     else:
       invalid.append(r)
@@ -235,7 +236,8 @@ monthStats(month, today, records, calendar):
   remain = max(0, need - A)
 
   if month == currentMonth(today):
-    S = count(d in workdays where today <= d <= monthEnd)
+    future_leave = count(r for r in valid where r.status == "leave" and r.date > today)
+    S = count(d in workdays where today <= d <= monthEnd) - future_leave
     feasible = S >= remain
     if remain == 0: status = "qualified"
     elif not feasible: status = "too_late"
@@ -256,7 +258,7 @@ monthStats(month, today, records, calendar):
 
 ## 9. 版本与变更
 
-- 当前 `specVersion = 1`。
+- 当前 `specVersion = 2`。
 - 方案 session 只读 `requirement/`；需要改规则时先在需求 session 中确认，更新本目录并递增 `specVersion`。
 - 每个方案 `README.md` 必须记录：`specVersion`、`holiday dataVersion`。
 - 四个方案必须通过 [test-cases.json](test-cases.json)。
