@@ -1,14 +1,14 @@
 # 到岗会疯（hs_calendar）
 
 个人到岗率追踪工具：`当月到岗天数 ÷ 当月工作日天数 ≥ 30%`。
-到岗一天记一天，请假一天记一天；随时查看「本月已到岗几天、还需几天」。
+记录到岗、请假；随时查看「本月已到岗几天、还需几天」。
 
 ## 方案状态
 
 | 目录 | 交互形态 | 数据 | 状态 |
 |---|---|---|---|
-| `pwa/` | 手机浏览器 / 可安装 PWA，月历点选 | 本地存储，离线可用 | 已完成 |
-| `doc_driven/` | 手机 AI app + 文档/skill，对话式 | 本地 CSV + 只读 JSON | 已完成 |
+| `pwa/` | 手机浏览器 / 可安装 PWA，月历点选 | 本地存储，离线可用 | 已完成，部署在 [`Netlify`](https://hs-calendar-339.netlify.app/) |
+| `doc_driven/` | 手机 AI app + 文档/skill，对话式 | 本地 CSV + 只读 JSON | 已完成，部署在 [`WorkBuddy`](https://www.workbuddy.cn/) |
 | `android_app/` | Android 原生 App，月历点选 | 本地数据库 | 已放弃 |
 | `hermes/` | 手机 Telegram Bot，对话式 | 服务端 | 已放弃 |
 
