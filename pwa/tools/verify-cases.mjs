@@ -1,0 +1,278 @@
+// 零依赖验收脚本：读取 requirement/test-cases.json 的 12 条黄金用例。
+// 运行：node tools/verify-cases.mjs
+
+import { readFileSync } from 'node:fs';
+import {
+  addMonths,
+  formatMonthTitle,
+  monthBounds,
+  monthGrid,
+  todayInShanghai,
+  weekdayMon0,
+} from '../public/js/dates.js';
+import {
+  buildCalendarIndex,
+  calcRatePercent,
+  computeMonthStats,
+  validateMarkInput,
+} from '../public/js/stats.js';
+
+const suite = JSON.parse(
+  readFileSync(new URL('../../requirement/test-cases.json', import.meta.url), 'utf8'),
+);
+
+function deepEqual(actual, expected) {
+  if (Object.is(actual, expected)) return true;
+  if (typeof actual !== typeof expected) return false;
+  if (actual === null || expected === null) return false;
+  if (Array.isArray(actual) || Array.isArray(expected)) {
+    if (!Array.isArray(actual) || !Array.isArray(expected) || actual.length !== expected.length) {
+      return false;
+    }
+    return actual.every((item, index) => deepEqual(item, expected[index]));
+  }
+  if (typeof actual === 'object') {
+    const actualKeys = Object.keys(actual);
+    const expectedKeys = Object.keys(expected);
+    if (actualKeys.length !== expectedKeys.length) return false;
+    return expectedKeys.every((key) => deepEqual(actual[key], expected[key]));
+  }
+  return false;
+}
+
+const failures = [];
+
+function check(label, condition, detail = '') {
+  if (condition) {
+    console.log(`  ok  ${label}`);
+  } else {
+    failures.push(`${label}${detail ? ` — ${detail}` : ''}`);
+    console.log(`  FAIL ${label}${detail ? ` — ${detail}` : ''}`);
+  }
+}
+
+const cal = buildCalendarIndex(suite.calendar);
+
+console.log(`黄金用例（${suite.cases.length} 条）`);
+for (const testCase of suite.cases) {
+  const actual = computeMonthStats({
+    month: testCase.month,
+    today: testCase.today,
+    records: testCase.records,
+    cal,
+  });
+  const mismatches = [];
+  for (const key of Object.keys(testCase.expected)) {
+    if (!actual || !deepEqual(actual[key], testCase.expected[key])) {
+      mismatches.push(
+        `${key}: expected ${JSON.stringify(testCase.expected[key])} got ${JSON.stringify(actual?.[key])}`,
+      );
+    }
+  }
+  check(testCase.id, mismatches.length === 0, mismatches.join('; '));
+}
+
+console.log('补充断言');
+check('addMonths 跨年 +1', addMonths('2026-12', 1) === '2027-01');
+check('addMonths 跨年 -1', addMonths('2026-01', -1) === '2025-12');
+check(
+  'todayInShanghai 按 Asia/Shanghai',
+  todayInShanghai(new Date('2026-11-15T16:30:00Z')) === '2026-11-16',
+);
+check('calcRatePercent 31.25 半向上', calcRatePercent(5, 16) === 31.3);
+check('calcRatePercent 21.0526 半向上', calcRatePercent(4, 19) === 21.1);
+check('calcRatePercent 30 整', calcRatePercent(6, 20) === 30);
+check('formatMonthTitle', formatMonthTitle('2026-11') === '2026 年 11 月');
+check('monthBounds 2026-02', monthBounds('2026-02').days === 28);
+check('weekdayMon0 2026-11-16 是周一', weekdayMon0('2026-11-16') === 0);
+
+const novGrid = monthGrid('2026-11');
+check(
+  'monthGrid 2026-11 周日开头（5 行，1 日在首格）',
+  novGrid.rows === 5 &&
+    novGrid.cells.length === 35 &&
+    novGrid.cells[0] === '2026-11-01' &&
+    novGrid.cells[29] === '2026-11-30' &&
+    novGrid.cells.slice(30).every((cell) => cell === null),
+);
+const junGrid = monthGrid('2026-06');
+check(
+  'monthGrid 2026-06 周一在第二格',
+  junGrid.rows === 5 &&
+    junGrid.cells[0] === null &&
+    junGrid.cells[1] === '2026-06-01' &&
+    junGrid.cells[30] === '2026-06-30',
+);
+const decGrid = monthGrid('2026-12');
+check(
+  'monthGrid 2026-12 前置 2 格',
+  decGrid.cells[0] === null &&
+    decGrid.cells[1] === null &&
+    decGrid.cells[2] === '2026-12-01',
+);
+const augGrid = monthGrid('2026-08');
+check(
+  'monthGrid 2026-08 周六首日前置 6 格',
+  augGrid.rows === 6 &&
+    augGrid.cells[0] === null &&
+    augGrid.cells[6] === '2026-08-01',
+);
+
+const futureStats = computeMonthStats({
+  month: '2026-12',
+  today: '2026-11-16',
+  records: [],
+  cal,
+});
+check('未来月返回 null', futureStats === null);
+
+const futureWeekend = validateMarkInput({
+  date: '2026-11-21',
+  status: 'on_site',
+  today: '2026-11-16',
+  cal,
+});
+check('未来周末优先报未来日期', futureWeekend.ok === false && futureWeekend.code === 'future');
+
+const futureRecord = computeMonthStats({
+  month: '2026-11',
+  today: '2026-11-16',
+  records: [{ date: '2026-11-20', status: 'on_site' }],
+  cal,
+});
+check(
+  '未来日期记录进入 invalid_records',
+  futureRecord.on_site_days === 0 &&
+    deepEqual(futureRecord.invalid_records, [{ date: '2026-11-20', status: 'on_site' }]),
+);
+
+const futureLeaveStats = computeMonthStats({
+  month: '2026-11',
+  today: '2026-11-16',
+  records: [{ date: '2026-11-20', status: 'leave' }],
+  cal,
+});
+check(
+  '未来请假计入统计且从 S 扣除',
+  futureLeaveStats.leave_days === 1 &&
+    futureLeaveStats.working_days === 20 &&
+    futureLeaveStats.on_site_days === 0 &&
+    futureLeaveStats.need === 6 &&
+    futureLeaveStats.remain === 6 &&
+    futureLeaveStats.rate_percent === 0 &&
+    futureLeaveStats.remaining_workdays === 10 &&
+    futureLeaveStats.feasible === true &&
+    futureLeaveStats.result_status === 'needs_days' &&
+    futureLeaveStats.invalid_records.length === 0,
+);
+
+const futureLeaveInput = validateMarkInput({
+  date: '2026-11-20',
+  status: 'leave',
+  today: '2026-11-16',
+  cal,
+});
+check('未来工作日允许请假', futureLeaveInput.ok === true);
+
+const futureOnSiteInput = validateMarkInput({
+  date: '2026-11-20',
+  status: 'on_site',
+  today: '2026-11-16',
+  cal,
+});
+check(
+  '未来工作日仍拒绝到岗',
+  futureOnSiteInput.ok === false && futureOnSiteInput.code === 'future',
+);
+
+const futureWeekendLeave = validateMarkInput({
+  date: '2026-11-21',
+  status: 'leave',
+  today: '2026-11-16',
+  cal,
+});
+check(
+  '未来非工作日拒绝请假',
+  futureWeekendLeave.ok === false && futureWeekendLeave.code === 'non_workday',
+);
+
+const futureMonthLeave = validateMarkInput({
+  date: '2026-12-01',
+  status: 'leave',
+  today: '2026-11-16',
+  cal,
+});
+check(
+  '未来月份仍拒绝请假',
+  futureMonthLeave.ok === false && futureMonthLeave.code === 'future',
+);
+
+const holidayRecord = computeMonthStats({
+  month: '2026-10',
+  today: '2026-11-16',
+  records: [{ date: '2026-10-01', status: 'on_site' }],
+  cal,
+});
+check(
+  '公休假记录进入 invalid_records',
+  holidayRecord.on_site_days === 0 &&
+    deepEqual(holidayRecord.invalid_records, [{ date: '2026-10-01', status: 'on_site' }]),
+);
+
+const historicalQualified = computeMonthStats({
+  month: '2026-10',
+  today: '2026-11-16',
+  records: ['2026-10-08', '2026-10-09', '2026-10-12', '2026-10-13', '2026-10-14', '2026-10-15'].map(
+    (date) => ({ date, status: 'on_site' }),
+  ),
+  cal,
+});
+check(
+  '历史月 qualified',
+  historicalQualified.result_status === 'qualified' &&
+    historicalQualified.remaining_workdays === null &&
+    historicalQualified.feasible === null,
+);
+
+const duplicateRecord = computeMonthStats({
+  month: '2026-11',
+  today: '2026-11-16',
+  records: [
+    { date: '2026-11-02', status: 'leave' },
+    { date: '2026-11-02', status: 'on_site' },
+  ],
+  cal,
+});
+check(
+  '同日记录后写覆盖',
+  duplicateRecord.leave_days === 0 && duplicateRecord.on_site_days === 1,
+);
+
+// 构造一个整月没有工作日的日历，验证 no_need / 除零分支。
+const noWorkdayHolidays = [];
+for (let d = 1; d <= 31; d += 1) {
+  const date = `2026-03-${String(d).padStart(2, '0')}`;
+  if (weekdayMon0(date) <= 4) noWorkdayHolidays.push({ date, name: '整月假' });
+}
+const noWorkdayCal = buildCalendarIndex({ holidays: noWorkdayHolidays, workdayOverrides: [] });
+const noWorkdayStats = computeMonthStats({
+  month: '2026-03',
+  today: '2026-03-31',
+  records: [],
+  cal: noWorkdayCal,
+});
+check(
+  'W0=0 → no_need',
+  noWorkdayStats.w0 === 0 &&
+    noWorkdayStats.working_days === 0 &&
+    noWorkdayStats.rate_percent === null &&
+    noWorkdayStats.result_status === 'no_need',
+);
+
+if (failures.length > 0) {
+  console.error(`\n${failures.length} 项失败：`);
+  for (const failure of failures) console.error(`- ${failure}`);
+  process.exitCode = 1;
+} else {
+  console.log('\n全部通过。');
+}
